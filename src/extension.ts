@@ -111,8 +111,12 @@ class SynapTreeViewProvider implements vscode.WebviewViewProvider {
     private _getHtmlForWebview(webview: vscode.Webview) {
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'main.js'));
         const htmlUri = vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'index.html');
+        const cspSource = webview.cspSource;
+
         let html = fs.readFileSync(htmlUri.fsPath, 'utf8');
-        return html.replace('${scriptUri}', scriptUri.toString());
+        html = html.replace('${scriptUri}', scriptUri.toString());
+        html = html.replace('${cspSource}', cspSource);
+        return html;
     }
 }
 
@@ -146,8 +150,15 @@ class SynapTreePanel {
         this._update();
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
         this._panel.webview.onDidReceiveMessage(message => {
-            if (message.command === 'openFile' && message.path) {
-                vscode.window.showTextDocument(vscode.Uri.file(message.path));
+            switch (message.command) {
+                case 'openFile':
+                    if (message.path) {
+                        vscode.window.showTextDocument(vscode.Uri.file(message.path));
+                    }
+                    break;
+                case 'ready':
+                    this._updateData();
+                    break;
             }
         }, null, this._disposables);
     }
@@ -163,7 +174,6 @@ class SynapTreePanel {
 
     private _update() {
         this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
-        this._updateData();
     }
 
     private _updateData() {
@@ -196,7 +206,12 @@ class SynapTreePanel {
 
     private _getHtmlForWebview(webview: vscode.Webview) {
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'main.js'));
-        const htmlPath = path.join(this._extensionUri.fsPath, 'src', 'webview', 'index.html');
-        return fs.readFileSync(htmlPath, 'utf8').replace('${scriptUri}', scriptUri.toString());
+        const htmlUri = vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'index.html');
+        const cspSource = webview.cspSource;
+
+        let html = fs.readFileSync(htmlUri.fsPath, 'utf8');
+        html = html.replace('${scriptUri}', scriptUri.toString());
+        html = html.replace('${cspSource}', cspSource);
+        return html;
     }
 }
