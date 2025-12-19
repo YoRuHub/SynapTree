@@ -9,9 +9,29 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [],
+    "activationEvents": [
+        "onView:synaptree-view"
+    ],
     "main": "./out/extension.js",
     "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "synaptree-sidebar",
+                    "title": "SynapTree",
+                    "icon": "$(circuit-board)"
+                }
+            ]
+        },
+        "views": {
+            "synaptree-sidebar": [
+                {
+                    "type": "webview",
+                    "id": "synaptree-view",
+                    "name": "SynapTree Explorer"
+                }
+            ]
+        },
         "commands": [
             {
                 "command": "synaptree.visualize",
