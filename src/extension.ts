@@ -2,7 +2,14 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
+let outputChannel: vscode.OutputChannel;
+
 export function activate(context: vscode.ExtensionContext) {
+    // Initialize Output Channel
+    outputChannel = vscode.window.createOutputChannel('SynapTree');
+    outputChannel.show(true);
+    outputChannel.appendLine('SynapTree Extension Activated');
+
     // 1. Sidebar View
     const provider = new SynapTreeViewProvider(context.extensionUri);
     context.subscriptions.push(
@@ -23,6 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 function getWorkspaceData(rootPath: string) {
     const nodes: any[] = [];
     const links: any[] = [];
+    outputChannel.appendLine(`Scanning workspace: ${rootPath}`);
 
     function traverse(currentPath: string, parentId?: string) {
         try {
@@ -36,7 +44,7 @@ function getWorkspaceData(rootPath: string) {
                 name,
                 path: currentPath,
                 type: isDir ? 'directory' : 'file',
-                val: isDir ? 6 : 3 // Visual weight
+                val: isDir ? 6 : 3
             });
 
             if (parentId) {
@@ -44,16 +52,15 @@ function getWorkspaceData(rootPath: string) {
             }
 
             if (isDir) {
-                // Ignore common noise
                 if (['node_modules', '.git', 'out', 'dist', '.vscode-test'].includes(name)) { return; }
-
                 const files = fs.readdirSync(currentPath);
                 files.forEach(file => traverse(path.join(currentPath, file), id));
             }
-        } catch (err) { console.error(err); }
+        } catch (err) { outputChannel.appendLine(`Error scanning ${currentPath}: ${err}`); }
     }
 
     traverse(rootPath);
+    outputChannel.appendLine(`Scan complete. Found ${nodes.length} nodes and ${links.length} links.`);
     return { nodes, links };
 }
 
@@ -64,14 +71,11 @@ function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri) {
 
     let html = fs.readFileSync(htmlUri.fsPath, 'utf8');
 
-    console.log('SynapTree: Replacing scriptUri with', scriptUri.toString());
+    // Log replacement (useful if scriptUri is wrong)
+    outputChannel.appendLine(`Setting up Webview with scriptUri: ${scriptUri}`);
+
     html = html.replace(/\${scriptUri}/g, scriptUri.toString());
     html = html.replace(/\${cspSource}/g, cspSource);
-
-    if (html.includes('${scriptUri}')) {
-        console.error('SynapTree: Failed to replace ${scriptUri} in HTML');
-    }
-
     return html;
 }
 
@@ -86,6 +90,7 @@ class SynapTreeViewProvider implements vscode.WebviewViewProvider {
 
     public resolveWebviewView(webviewView: vscode.WebviewView) {
         this._view = webviewView;
+        outputChannel.appendLine('Sidebar Webview resolving...');
 
         webviewView.webview.options = {
             enableScripts: true,
@@ -97,6 +102,9 @@ class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'ready':
+                    outputChannel.appendLine('Sidebar received READY signal');
+                    this._updateData();
+                    break;
                 case 'refresh':
                     this._updateData();
                     break;
@@ -108,7 +116,6 @@ class SynapTreeViewProvider implements vscode.WebviewViewProvider {
             }
         });
 
-        // Watchers
         const watcher = vscode.workspace.createFileSystemWatcher('**/*');
         watcher.onDidCreate(() => this._updateData());
         watcher.onDidChange(() => this._updateData());
@@ -119,11 +126,11 @@ class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         if (!this._view) return;
         const folders = vscode.workspace.workspaceFolders;
         if (folders) {
-            console.log('SynapTree: Sending data to Sidebar');
+            outputChannel.appendLine('Sending data to Sidebar');
             const data = getWorkspaceData(folders[0].uri.fsPath);
             this._view.webview.postMessage({ command: 'setData', data });
         } else {
-            console.log('SynapTree: No workspace folders found for Sidebar');
+            outputChannel.appendLine('No workspace folders open');
             this._view.webview.postMessage({ command: 'setData', data: { nodes: [], links: [] } });
         }
     }
@@ -154,12 +161,16 @@ class SynapTreePanel {
         this._panel = panel;
         this._extensionUri = extensionUri;
 
+        outputChannel.appendLine('Panel created');
         this._panel.webview.html = getHtmlForWebview(this._panel.webview, this._extensionUri);
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
         this._panel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'ready':
+                    outputChannel.appendLine('Panel received READY signal');
+                    this._updateData();
+                    break;
                 case 'refresh':
                     this._updateData();
                     break;
@@ -184,11 +195,11 @@ class SynapTreePanel {
     private _updateData() {
         const folders = vscode.workspace.workspaceFolders;
         if (folders) {
-            console.log('SynapTree: Sending data to Panel');
+            outputChannel.appendLine('Sending data to Panel');
             const data = getWorkspaceData(folders[0].uri.fsPath);
             this._panel.webview.postMessage({ command: 'setData', data });
         } else {
-            console.log('SynapTree: No workspace folders found for Panel');
+            outputChannel.appendLine('No workspace folders found for Panel');
             this._panel.webview.postMessage({ command: 'setData', data: { nodes: [], links: [] } });
         }
     }
