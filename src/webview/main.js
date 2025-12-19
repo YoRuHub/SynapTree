@@ -1,6 +1,17 @@
 const vscode = acquireVsCodeApi();
-console.log('WebView: Script loaded');
+console.log('WebView: Script main.js starting...');
+const status = document.getElementById('status');
 const elem = document.getElementById('graph');
+
+if (typeof THREE === 'undefined') {
+    console.error('THREE is not defined');
+    status.innerText = 'Error: Three.js failed to load';
+} else if (typeof ForceGraph3D === 'undefined') {
+    console.error('ForceGraph3D is not defined');
+    status.innerText = 'Error: 3d-force-graph failed to load';
+} else {
+    status.innerText = 'Libraries loaded, creating graph...';
+}
 
 const Graph = ForceGraph3D()(elem)
     .nodeAutoColorBy('type')
@@ -95,8 +106,10 @@ Graph.d3Force('center').strength(0.1);
 
 window.addEventListener('message', event => {
     const message = event.data;
+    console.log('WebView received message:', message.command);
     switch (message.command) {
         case 'setData':
+            status.style.display = 'none';
             Graph.graphData(message.data);
             break;
     }

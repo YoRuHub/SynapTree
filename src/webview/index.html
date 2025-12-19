@@ -7,12 +7,24 @@
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} https://unpkg.com; connect-src https://unpkg.com;">
     <title>SynapTree</title>
+    <script src="https://unpkg.com/three"></script>
     <script src="https://unpkg.com/3d-force-graph"></script>
     <style>
         body {
             margin: 0;
             background-color: #000;
+            color: #fff;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #status {
+            position: absolute;
+            z-index: 100;
+            font-family: sans-serif;
+            pointer-events: none;
         }
 
         #graph {
@@ -33,6 +45,7 @@
 </head>
 
 <body>
+    <div id="status">Initializing...</div>
     <div id="graph"></div>
     <script src="${scriptUri}"></script>
 </body>
