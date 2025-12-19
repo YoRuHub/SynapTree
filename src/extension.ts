@@ -3,17 +3,69 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
-    // 1. Panel Command
-    let disposable = vscode.commands.registerCommand('synaptree.visualize', () => {
-        SynapTreePanel.createOrShow(context.extensionUri);
-    });
-    context.subscriptions.push(disposable);
-
-    // 2. Sidebar View
+    // 1. Sidebar View
     const provider = new SynapTreeViewProvider(context.extensionUri);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(SynapTreeViewProvider.viewType, provider)
     );
+
+    // 2. Panel Command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('synaptree.visualize', () => {
+            SynapTreePanel.createOrShow(context.extensionUri);
+        })
+    );
+}
+
+/**
+ * Shared Data Provider Logic
+ */
+function getWorkspaceData(rootPath: string) {
+    const nodes: any[] = [];
+    const links: any[] = [];
+
+    function traverse(currentPath: string, parentId?: string) {
+        try {
+            const stats = fs.statSync(currentPath);
+            const isDir = stats.isDirectory();
+            const name = path.basename(currentPath);
+            const id = currentPath;
+
+            nodes.push({
+                id,
+                name,
+                path: currentPath,
+                type: isDir ? 'directory' : 'file',
+                val: isDir ? 6 : 3 // Visual weight
+            });
+
+            if (parentId) {
+                links.push({ source: parentId, target: id });
+            }
+
+            if (isDir) {
+                // Ignore common noise
+                if (['node_modules', '.git', 'out', 'dist', '.vscode-test'].includes(name)) { return; }
+
+                const files = fs.readdirSync(currentPath);
+                files.forEach(file => traverse(path.join(currentPath, file), id));
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    traverse(rootPath);
+    return { nodes, links };
+}
+
+function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri) {
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'src', 'webview', 'main.js'));
+    const htmlUri = vscode.Uri.joinPath(extensionUri, 'src', 'webview', 'index.html');
+    const cspSource = webview.cspSource;
+
+    let html = fs.readFileSync(htmlUri.fsPath, 'utf8');
+    html = html.replace(/\${scriptUri}/g, scriptUri.toString());
+    html = html.replace(/\${cspSource}/g, cspSource);
+    return html;
 }
 
 /**
@@ -25,39 +77,31 @@ class SynapTreeViewProvider implements vscode.WebviewViewProvider {
 
     constructor(private readonly _extensionUri: vscode.Uri) { }
 
-    public resolveWebviewView(
-        webviewView: vscode.WebviewView,
-        _context: vscode.WebviewViewResolveContext,
-        _token: vscode.CancellationToken,
-    ) {
+    public resolveWebviewView(webviewView: vscode.WebviewView) {
         this._view = webviewView;
 
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [
-                vscode.Uri.joinPath(this._extensionUri, 'src', 'webview')
-            ]
+            localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'src', 'webview')]
         };
 
-        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        webviewView.webview.html = getHtmlForWebview(webviewView.webview, this._extensionUri);
 
         webviewView.webview.onDidReceiveMessage(message => {
             switch (message.command) {
+                case 'ready':
+                case 'refresh':
+                    this._updateData();
+                    break;
                 case 'openFile':
                     if (message.path) {
                         vscode.window.showTextDocument(vscode.Uri.file(message.path));
                     }
                     break;
-                case 'refresh':
-                    this._updateData();
-                    break;
             }
         });
 
-        // Initial Data
-        this._updateData();
-
-        // Watch for workspace changes
+        // Watchers
         const watcher = vscode.workspace.createFileSystemWatcher('**/*');
         watcher.onDidCreate(() => this._updateData());
         watcher.onDidChange(() => this._updateData());
@@ -65,63 +109,17 @@ class SynapTreeViewProvider implements vscode.WebviewViewProvider {
     }
 
     private _updateData() {
-        if (!this._view) { return; }
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders) {
-            const data = this._getWorkspaceData(workspaceFolders[0].uri.fsPath);
+        if (!this._view) return;
+        const folders = vscode.workspace.workspaceFolders;
+        if (folders) {
+            const data = getWorkspaceData(folders[0].uri.fsPath);
             this._view.webview.postMessage({ command: 'setData', data });
         }
-    }
-
-    private _getWorkspaceData(rootPath: string) {
-        const nodes: any[] = [];
-        const links: any[] = [];
-
-        function traverse(currentPath: string, parentId?: string) {
-            try {
-                const stats = fs.statSync(currentPath);
-                const isDir = stats.isDirectory();
-                const name = path.basename(currentPath);
-                const id = currentPath;
-
-                nodes.push({
-                    id,
-                    name,
-                    path: currentPath,
-                    type: isDir ? 'directory' : 'file',
-                    val: isDir ? 5 : 2
-                });
-
-                if (parentId) {
-                    links.push({ source: parentId, target: id });
-                }
-
-                if (isDir) {
-                    if (name === 'node_modules' || name === '.git') { return; }
-                    const files = fs.readdirSync(currentPath);
-                    files.forEach(file => traverse(path.join(currentPath, file), id));
-                }
-            } catch (err) { console.error(err); }
-        }
-
-        traverse(rootPath);
-        return { nodes, links };
-    }
-
-    private _getHtmlForWebview(webview: vscode.Webview) {
-        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'main.js'));
-        const htmlUri = vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'index.html');
-        const cspSource = webview.cspSource;
-
-        let html = fs.readFileSync(htmlUri.fsPath, 'utf8');
-        html = html.replace('${scriptUri}', scriptUri.toString());
-        html = html.replace('${cspSource}', cspSource);
-        return html;
     }
 }
 
 /**
- * Standalone Panel (for the command)
+ * Standalone Panel
  */
 class SynapTreePanel {
     public static currentPanel: SynapTreePanel | undefined;
@@ -134,12 +132,10 @@ class SynapTreePanel {
             SynapTreePanel.currentPanel._panel.reveal(vscode.ViewColumn.One);
             return;
         }
-
         const panel = vscode.window.createWebviewPanel('synapTree', 'SynapTree 3D', vscode.ViewColumn.One, {
             enableScripts: true,
             localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'src', 'webview')]
         });
-
         SynapTreePanel.currentPanel = new SynapTreePanel(panel, extensionUri);
     }
 
@@ -147,17 +143,19 @@ class SynapTreePanel {
         this._panel = panel;
         this._extensionUri = extensionUri;
 
-        this._update();
+        this._panel.webview.html = getHtmlForWebview(this._panel.webview, this._extensionUri);
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
         this._panel.webview.onDidReceiveMessage(message => {
             switch (message.command) {
+                case 'ready':
+                case 'refresh':
+                    this._updateData();
+                    break;
                 case 'openFile':
                     if (message.path) {
                         vscode.window.showTextDocument(vscode.Uri.file(message.path));
                     }
-                    break;
-                case 'ready':
-                    this._updateData();
                     break;
             }
         }, null, this._disposables);
@@ -168,50 +166,15 @@ class SynapTreePanel {
         this._panel.dispose();
         while (this._disposables.length) {
             const x = this._disposables.pop();
-            if (x) { x.dispose(); }
+            if (x) x.dispose();
         }
-    }
-
-    private _update() {
-        this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
     }
 
     private _updateData() {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders) {
-            const data = this._getWorkspaceData(workspaceFolders[0].uri.fsPath);
+        const folders = vscode.workspace.workspaceFolders;
+        if (folders) {
+            const data = getWorkspaceData(folders[0].uri.fsPath);
             this._panel.webview.postMessage({ command: 'setData', data });
         }
-    }
-
-    private _getWorkspaceData(rootPath: string) {
-        // Reuse logic or shared util if this was a larger project
-        const nodes: any[] = [];
-        const links: any[] = [];
-        function traverse(currentPath: string, parentId?: string) {
-            try {
-                const stats = fs.statSync(currentPath);
-                const isDir = stats.isDirectory();
-                const node = { id: currentPath, name: path.basename(currentPath), path: currentPath, type: isDir ? 'directory' : 'file', val: isDir ? 5 : 2 };
-                nodes.push(node);
-                if (parentId) links.push({ source: parentId, target: currentPath });
-                if (isDir && !['node_modules', '.git'].includes(path.basename(currentPath))) {
-                    fs.readdirSync(currentPath).forEach(f => traverse(path.join(currentPath, f), currentPath));
-                }
-            } catch { }
-        }
-        traverse(rootPath);
-        return { nodes, links };
-    }
-
-    private _getHtmlForWebview(webview: vscode.Webview) {
-        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'main.js'));
-        const htmlUri = vscode.Uri.joinPath(this._extensionUri, 'src', 'webview', 'index.html');
-        const cspSource = webview.cspSource;
-
-        let html = fs.readFileSync(htmlUri.fsPath, 'utf8');
-        html = html.replace('${scriptUri}', scriptUri.toString());
-        html = html.replace('${cspSource}', cspSource);
-        return html;
     }
 }
