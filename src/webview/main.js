@@ -90,18 +90,24 @@ Graph.linkThreeObjectExtend(true)
 Graph.d3Force('charge').strength(-180);
 Graph.d3Force('link').distance(80);
 
+window.addEventListener('message', event => {
+    const message = event.data;
+    console.log('WebView: Received message', message.command);
+    if (message.command === 'setData') {
+        status.style.display = 'none';
+        if (message.data && message.data.nodes && message.data.nodes.length > 0) {
+            console.log(`WebView: Setting graph data with ${message.data.nodes.length} nodes`);
+            Graph.graphData(message.data);
+        } else {
+            console.warn('WebView: Received empty or invalid data');
+            status.innerText = 'No files found to visualize';
+        }
+    }
+});
+
 // Handshake
 console.log('WebView: Sending ready...');
 vscode.postMessage({ command: 'ready' });
-
-window.addEventListener('message', event => {
-    const message = event.data;
-    console.log('WebView: Received', message.command);
-    if (message.command === 'setData') {
-        status.style.display = 'none';
-        Graph.graphData(message.data);
-    }
-});
 
 window.addEventListener('resize', () => {
     Graph.width(window.innerWidth).height(window.innerHeight);
