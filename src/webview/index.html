@@ -42,6 +42,12 @@
             pointer-events: none;
         }
     </style>
+    <script>
+        console.log('WebView: Inline script running at top of body');
+        window.onerror = function (msg, url, line) {
+            console.error('WebView Error: ' + msg + ' at ' + url + ':' + line);
+        };
+    </script>
 </head>
 
 <body>

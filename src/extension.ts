@@ -63,8 +63,15 @@ function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri) {
     const cspSource = webview.cspSource;
 
     let html = fs.readFileSync(htmlUri.fsPath, 'utf8');
+
+    console.log('SynapTree: Replacing scriptUri with', scriptUri.toString());
     html = html.replace(/\${scriptUri}/g, scriptUri.toString());
     html = html.replace(/\${cspSource}/g, cspSource);
+
+    if (html.includes('${scriptUri}')) {
+        console.error('SynapTree: Failed to replace ${scriptUri} in HTML');
+    }
+
     return html;
 }
 
