@@ -120,3 +120,4 @@ window.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', () => {
         Graph.width(window.innerWidth).height(window.innerHeight);
     });
+});
