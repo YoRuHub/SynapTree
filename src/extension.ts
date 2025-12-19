@@ -112,8 +112,12 @@ class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         if (!this._view) return;
         const folders = vscode.workspace.workspaceFolders;
         if (folders) {
+            console.log('SynapTree: Sending data to Sidebar');
             const data = getWorkspaceData(folders[0].uri.fsPath);
             this._view.webview.postMessage({ command: 'setData', data });
+        } else {
+            console.log('SynapTree: No workspace folders found for Sidebar');
+            this._view.webview.postMessage({ command: 'setData', data: { nodes: [], links: [] } });
         }
     }
 }
@@ -173,8 +177,12 @@ class SynapTreePanel {
     private _updateData() {
         const folders = vscode.workspace.workspaceFolders;
         if (folders) {
+            console.log('SynapTree: Sending data to Panel');
             const data = getWorkspaceData(folders[0].uri.fsPath);
             this._panel.webview.postMessage({ command: 'setData', data });
+        } else {
+            console.log('SynapTree: No workspace folders found for Panel');
+            this._panel.webview.postMessage({ command: 'setData', data: { nodes: [], links: [] } });
         }
     }
 }

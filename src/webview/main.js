@@ -30,7 +30,8 @@ const Graph = ForceGraph3D()(elem)
         }
     });
 
-// Neo-Synapse Styling with Three.js Spheres
+// Neo-Synapse Styling with Three.js Spheres (Optimized)
+const pulseObjects = [];
 Graph.nodeThreeObject(node => {
     const isDir = node.type === 'directory';
     const color = isDir ? '#ff00ff' : '#00ffff';
@@ -38,23 +39,22 @@ Graph.nodeThreeObject(node => {
 
     const group = new THREE.Group();
 
-    // 1. Core Sphere (The "Soma" or terminal)
+    // 1. Core Sphere
     const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(size, 20, 20),
+        new THREE.SphereGeometry(size, 16, 16),
         new THREE.MeshPhongMaterial({
             color: color,
             transparent: true,
             opacity: 0.9,
             emissive: color,
-            emissiveIntensity: 1.5,
-            shininess: 100
+            emissiveIntensity: 1.2
         })
     );
     group.add(sphere);
 
     // 2. Halo Glow
     const glow = new THREE.Mesh(
-        new THREE.SphereGeometry(size * 1.6, 16, 16),
+        new THREE.SphereGeometry(size * 1.5, 12, 12),
         new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
@@ -64,20 +64,23 @@ Graph.nodeThreeObject(node => {
     );
     group.add(glow);
 
-    // 3. Pulse Logic
-    const speed = 0.02 + Math.random() * 0.03;
-    let t = Math.random() * 100;
-    const animate = () => {
-        t += speed;
-        const scale = 1 + Math.sin(t) * 0.12;
-        sphere.scale.set(scale, scale, scale);
-        glow.scale.set(scale, scale, scale);
-        requestAnimationFrame(animate);
-    };
-    animate();
+    // Add to animation list instead of separate RAF
+    pulseObjects.push({ sphere, glow, t: Math.random() * 10, speed: 0.02 + Math.random() * 0.02 });
 
     return group;
 });
+
+// Single animation loop for all nodes
+function globalAnimate() {
+    pulseObjects.forEach(obj => {
+        obj.t += obj.speed;
+        const scale = 1 + Math.sin(obj.t) * 0.1;
+        obj.sphere.scale.set(scale, scale, scale);
+        obj.glow.scale.set(scale, scale, scale);
+    });
+    requestAnimationFrame(globalAnimate);
+}
+globalAnimate();
 
 Graph.linkThreeObjectExtend(true)
     .linkDirectionalParticleColor(() => '#ffffff')
