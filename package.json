@@ -2,7 +2,7 @@
     "name": "synaptree",
     "displayName": "SynapTree",
     "description": "3D File System Visualization",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "icon": "resources/logo.jpg",
     "publisher": "YoRuHub",
     "license": "MIT",

@@ -10,3 +10,4 @@ webpack.config.js
 node_modules
 out/test
 **/*.map
+!src/webview/**
