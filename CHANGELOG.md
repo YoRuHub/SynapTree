@@ -2,6 +2,11 @@
 
 All notable changes to the "SynapTree" extension will be documented in this file.
 
+## [0.0.5] - 2025-12-20
+### Fixed
+- Corrected repository URL in package metadata.
+- Restored standard relative link for License in README.
+
 ## [0.0.4] - 2025-12-20
 ### Added
 - **Movable Root Node**: The root node is no longer fixed and can be dragged freely.
