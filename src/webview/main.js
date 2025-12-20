@@ -94,10 +94,13 @@ try {
         group.add(glow);
 
         pulseObjects.push({
+            nodeId: node.id,
+            node: node,
             sphere,
             glow,
             t: Math.random() * 10,
-            speed: isDir ? 0.015 : 0.03
+            speed: isDir ? 0.015 : 0.03,
+            isMatch: false
         });
 
         return group;
@@ -109,14 +112,66 @@ try {
     function animate() {
         pulseObjects.forEach(obj => {
             obj.t += obj.speed;
-            const s = 1 + Math.sin(obj.t) * 0.15;
-            obj.sphere.scale.set(s, s, s);
-            obj.glow.scale.set(s, s, s);
+
+            // Highlight glow for matches
+            if (obj.isMatch) {
+                const s = 1.3 + Math.sin(obj.t * 2) * 0.3; // Stronger, faster pulse for matches
+                obj.sphere.scale.set(s, s, s);
+                obj.glow.scale.set(s * 1.5, s * 1.5, s * 1.5);
+                obj.glow.material.opacity = 0.6;
+                obj.glow.material.color.set('#ffff00');
+            } else {
+                const s = 1 + Math.sin(obj.t) * 0.15;
+                obj.sphere.scale.set(s, s, s);
+                obj.glow.scale.set(s, s, s);
+                obj.glow.material.opacity = 0.15;
+                // Revert to original node color if not a match
+                const nodeColor = obj.node.color || (obj.node.type === 'directory' ? '#ff00ff' : '#00ffff');
+                obj.glow.material.color.set(nodeColor);
+            }
         });
         requestAnimationFrame(animate);
     }
     animate();
     log('Animation loop started');
+
+    // Real-time search handling
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase().trim();
+            if (!query) {
+                status.style.display = 'none';
+                pulseObjects.forEach(obj => {
+                    obj.isMatch = false;
+                });
+                return;
+            }
+
+            const { nodes } = Graph.graphData();
+            let matchCount = 0;
+
+            pulseObjects.forEach(obj => {
+                const node = nodes.find(n => n.id === obj.nodeId || n === obj.node);
+                if (node && node.name.toLowerCase().includes(query)) {
+                    obj.isMatch = true;
+                    matchCount++;
+                } else {
+                    obj.isMatch = false;
+                }
+            });
+
+            if (matchCount > 0) {
+                status.innerText = `${matchCount} matches found`;
+                status.style.display = 'block';
+                status.style.backgroundColor = 'rgba(255, 255, 0, 0.1)';
+            } else {
+                status.innerText = 'No matches found';
+                status.style.display = 'block';
+                status.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+            }
+        });
+    }
 
 } catch (err) {
     status.innerText = 'Graph Init Error: ' + err.message;
@@ -138,8 +193,12 @@ window.addEventListener('message', event => {
                 status.innerText = 'Rendering Graph...';
                 pulseObjects.length = 0;
                 Graph.graphData(message.data);
-                status.style.display = 'none';
-                setTimeout(() => { Graph.zoomToFit(600); }, 500);
+                status.style.display = 'block';
+                status.innerText = `${message.data.nodes.length} nodes loaded`;
+                setTimeout(() => {
+                    status.style.display = 'none';
+                    Graph.zoomToFit(600);
+                }, 1500);
                 log('Data applied successfully');
             } else {
                 log('Received empty or invalid data');
@@ -150,35 +209,11 @@ window.addEventListener('message', event => {
             status.innerText = 'Error processing data: ' + err.message;
         }
     } else if (message.command === 'search') {
-        const query = (message.query || '').toLowerCase();
-        if (!query) {
-            highlightLinks.clear();
-            Graph.linkColor(Graph.linkColor());
-            status.style.display = 'none';
-            return;
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
         }
-
-        const { nodes } = Graph.graphData();
-        const matches = nodes.filter(n => n.name.toLowerCase().includes(query));
-
-        if (matches.length > 0) {
-            status.innerText = `${matches.length} matches found for "${query}"`;
-            status.style.display = 'block';
-            status.style.backgroundColor = 'rgba(255, 255, 0, 0.2)';
-
-            // To highlight "glow", we can temporarily modify the pulse properties or color
-            // For now, let's just zoom to the first match if it exists
-            setTimeout(() => {
-                Graph.zoomToFit(600, 100, node => matches.includes(node));
-            }, 100);
-        } else {
-            status.innerText = `No matches found for "${query}"`;
-            status.style.display = 'block';
-            status.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
-        }
-
-        // Auto-hide status after 3 seconds
-        setTimeout(() => { status.style.display = 'none'; }, 3000);
     }
 });
 
