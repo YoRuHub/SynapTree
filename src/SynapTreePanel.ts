@@ -60,8 +60,6 @@ export class SynapTreePanel {
                                 vscode.window.showTextDocument(vscode.Uri.file(message.path));
                             }
                             break;
-                        case 'updateConfig':
-                            this._updateConfiguration(message.config);
                             break;
                     }
                 } catch (err) {
@@ -89,12 +87,6 @@ export class SynapTreePanel {
         }
     }
 
-    private async _updateConfiguration(config: any) {
-        const target = vscode.ConfigurationTarget.Workspace;
-        const synapConfig = vscode.workspace.getConfiguration('synaptree');
-        await synapConfig.update('visuals.activeColor', config.activeColor, target);
-        this._outputChannel.appendLine(`Panel Config updated: ${JSON.stringify(config)}`);
-    }
 
     public dispose() {
         SynapTreePanel.currentPanel = undefined;

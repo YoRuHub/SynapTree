@@ -81,6 +81,10 @@
                     "markdownDescription": "%synaptree.config.colors.extensions%",
                     "items": {
                         "type": "object",
+                        "required": [
+                            "extension",
+                            "color"
+                        ],
                         "properties": {
                             "extension": {
                                 "type": "string",
@@ -89,7 +93,7 @@
                             "color": {
                                 "type": "string",
                                 "format": "color-hex",
-                                "description": "Color code"
+                                "description": "Color code (e.g. #ff0000)"
                             }
                         }
                     },
