@@ -27,12 +27,11 @@ try {
         .backgroundColor('#000308')
         .nodeColor(node => node.color || '#00ffff')
         .nodeLabel(node => `<div class="node-label">${node.name}</div>`)
-        // Standardizing width at 2.5. Restore transparency for biological feel.
-        .linkColor(link => highlightLinks.has(link) ? '#ffff00' : 'rgba(255, 255, 255, 0.2)')
+        // Standardizing width at 2.5. Further dim active to 50% for subtle glow.
+        .linkColor(link => highlightLinks.has(link) ? 'rgba(255, 255, 0, 0.5)' : 'rgba(255, 255, 255, 0.2)')
         .linkWidth(2.5)
-        .linkOpacity(1.0) // This controls linkOpacity property if linkTransparent is true
+        .linkOpacity(1.0)
         .linkCurvature(0.15)
-        // Particles (Signals) MUST be visible
         .linkDirectionalParticles(1)
         .linkDirectionalParticleSpeed(0.005)
         .linkDirectionalParticleWidth(3.0)
@@ -43,15 +42,21 @@ try {
                 highlightLinks.clear();
                 if (node) {
                     const { links } = Graph.graphData();
-                    links.forEach(l => {
-                        const s = l.source.id || l.source;
-                        const t = l.target.id || l.target;
-                        if (s === node.id || t === node.id) {
-                            highlightLinks.add(l);
-                        }
-                    });
+
+                    // Recursive highlight to the "tips" (subtree)
+                    const traverse = (n) => {
+                        links.forEach(l => {
+                            const s = l.source.id || l.source;
+                            if (s === n.id) {
+                                highlightLinks.add(l);
+                                traverse(l.target);
+                            }
+                        });
+                    };
+                    traverse(node);
                 }
                 Graph.linkColor(Graph.linkColor());
+
                 if (node && node.type === 'file' && node.path) {
                     vscode.postMessage({ command: 'openFile', path: node.path });
                 }
