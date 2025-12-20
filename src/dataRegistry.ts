@@ -30,7 +30,6 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
     const dirColor = config.get<string>('directory', '#ff00ff');
     const defaultFileColor = config.get<string>('defaultFile', '#00ffff');
 
-    // Convert array of {extension, color} to Record<string, string>
     // Robust check: handle both legacy object format and new array format
     const extensionsConfig = config.get<any>('extensions', []);
     const extensionMap: Record<string, string> = {};
@@ -48,6 +47,10 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
         }
     }
 
+    // Load ignore patterns
+    const generalConfig = vscode.workspace.getConfiguration('synaptree.general');
+    const ignorePatterns = generalConfig.get<string[]>('ignorePatterns', []);
+
     if (outputChannel) {
         outputChannel.appendLine(`Scanning: ${rootPath}`);
     }
@@ -58,6 +61,19 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
             const isDir = stats.isDirectory();
             const name = path.basename(currentPath);
             const id = currentPath;
+
+            // Check ignore patterns
+            const shouldIgnore = ignorePatterns.some(pattern => {
+                if (pattern.includes('*')) {
+                    const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$', 'i');
+                    return regex.test(name);
+                }
+                return name === pattern;
+            });
+
+            if (shouldIgnore) {
+                return;
+            }
 
             // Determine color
             let color = defaultFileColor;
@@ -84,10 +100,6 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
             }
 
             if (isDir) {
-                // Ignore pattern
-                if (['node_modules', '.git', 'out', 'dist', '.vscode-test', 'target', 'bin'].includes(name)) {
-                    return;
-                }
                 const files = fs.readdirSync(currentPath);
                 files.forEach(file => traverse(path.join(currentPath, file), id));
             }

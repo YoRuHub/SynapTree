@@ -127,6 +127,23 @@
                     ],
                     "default": "auto",
                     "description": "%synaptree.config.general.language%"
+                },
+                "synaptree.general.ignorePatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "node_modules",
+                        ".git",
+                        "out",
+                        "dist",
+                        ".vscode-test",
+                        "target",
+                        "bin",
+                        ".DS_Store"
+                    ],
+                    "description": "%synaptree.config.general.ignorePatterns%"
                 }
             }
         }

@@ -8,6 +8,7 @@
     "synaptree.config.visuals.particleSpeed": "Speed of signal particles",
     "synaptree.config.visuals.particleWidth": "Size of signal particles",
     "synaptree.config.general.language": "Display language. If set to 'auto', it follows VS Code's locale.",
+    "synaptree.config.general.ignorePatterns": "Files or directories to ignore (glob patterns supported). e.g. .git, node_modules, *.tmp",
     "synaptree.command.visualize": "SynapTree: Visualize Structure",
     "synaptree.command.refresh": "SynapTree: Refresh Graph",
     "synaptree.command.openSettings": "SynapTree: Open Settings"

@@ -8,6 +8,7 @@
     "synaptree.config.visuals.particleSpeed": "信号（粒子）が流れる速度",
     "synaptree.config.visuals.particleWidth": "信号（粒子）の大きさ",
     "synaptree.config.general.language": "表示言語。'auto' の場合は VS Code の設定に従います。",
+    "synaptree.config.general.ignorePatterns": "除外するファイルまたはディレクトリ（パターン指定可）。例: .git, node_modules, *.tmp",
     "synaptree.command.visualize": "SynapTree: 構造を可視化",
     "synaptree.command.refresh": "SynapTree: グラフを更新",
     "synaptree.command.openSettings": "SynapTree: 設定を開く"
