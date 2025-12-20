@@ -27,13 +27,15 @@ try {
         .backgroundColor('#000308')
         .nodeColor(node => node.color || '#00ffff')
         .nodeLabel(node => `<div class="node-label">${node.name}</div>`)
-        .linkColor(link => highlightLinks.has(link) ? '#ffff00' : '#ffffff')
+        // Standardizing width at 2.5. Restore transparency for biological feel.
+        .linkColor(link => highlightLinks.has(link) ? '#ffff00' : 'rgba(255, 255, 255, 0.2)')
         .linkWidth(2.5)
-        .linkOpacity(1.0)
+        .linkOpacity(1.0) // This controls linkOpacity property if linkTransparent is true
         .linkCurvature(0.15)
+        // Particles (Signals) MUST be visible
         .linkDirectionalParticles(1)
         .linkDirectionalParticleSpeed(0.005)
-        .linkDirectionalParticleWidth(2.5)
+        .linkDirectionalParticleWidth(3.0)
         .dagMode('radialout')
         .dagLevelDistance(250)
         .onNodeClick(node => {
