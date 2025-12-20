@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; connect-src https://cdn.jsdelivr.net;">
+        content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:; connect-src https://cdn.jsdelivr.net;">
     <title>SynapTree</title>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.73.0/dist/3d-force-graph.min.js"></script>
@@ -25,6 +25,7 @@
             z-index: 100;
             font-family: sans-serif;
             pointer-events: none;
+            text-align: center;
         }
 
         #graph {
@@ -34,7 +35,7 @@
 
         .node-label {
             color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: sans-serif;
             font-size: 12px;
             padding: 2px 4px;
             background: rgba(0, 0, 0, 0.6);
@@ -42,16 +43,10 @@
             pointer-events: none;
         }
     </style>
-    <script>
-        console.log('WebView: Inline script running at top of body');
-        window.onerror = function (msg, url, line) {
-            console.error('WebView Error: ' + msg + ' at ' + url + ':' + line);
-        };
-    </script>
 </head>
 
 <body>
-    <div id="status">Initializing...</div>
+    <div id="status">Initializing 3D Environment...</div>
     <div id="graph"></div>
     <script src="${scriptUri}"></script>
 </body>

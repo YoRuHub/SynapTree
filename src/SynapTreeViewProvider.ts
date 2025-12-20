@@ -24,6 +24,11 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.onDidReceiveMessage(message => {
             try {
+                if (message.command === 'log') {
+                    this._outputChannel.appendLine(`[WebView Log] ${message.text}`);
+                    return;
+                }
+
                 this._outputChannel.appendLine(`Sidebar received: ${message.command}`);
                 switch (message.command) {
                     case 'ready':

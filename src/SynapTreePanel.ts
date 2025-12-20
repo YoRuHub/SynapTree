@@ -45,6 +45,11 @@ export class SynapTreePanel {
         this._panel.webview.onDidReceiveMessage(
             message => {
                 try {
+                    if (message.command === 'log') {
+                        this._outputChannel.appendLine(`[Panel WebView Log] ${message.text}`);
+                        return;
+                    }
+
                     this._outputChannel.appendLine(`Panel received: ${message.command}`);
                     switch (message.command) {
                         case 'ready':

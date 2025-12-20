@@ -2,19 +2,26 @@ const vscode = acquireVsCodeApi();
 const elem = document.getElementById('graph');
 const status = document.getElementById('status');
 
-console.log('WebView: SynapTree Initialization Starting');
+function log(msg) {
+    console.log('WebView:', msg);
+    vscode.postMessage({ command: 'log', text: msg });
+}
+
+log('Script started');
 
 // 1. Initial Library Check
 if (typeof ForceGraph3D !== 'function') {
-    const errorMsg = 'Error: 3d-force-graph library failed to load. Check internet connection or CSP settings.';
+    const errorMsg = 'Error: 3d-force-graph library not found. Check connection/CSP.';
     status.innerText = errorMsg;
-    console.error(errorMsg);
+    log(errorMsg);
+} else {
+    log('3d-force-graph library detected');
 }
 
 let highlightLinks = new Set();
 const pulseObjects = [];
-
 let Graph;
+
 try {
     Graph = ForceGraph3D()(elem)
         .backgroundColor('#000308')
@@ -22,7 +29,6 @@ try {
         .nodeLabel(node => `<div class="node-label">${node.name}</div>`)
         .linkColor(link => highlightLinks.has(link) ? '#ffff00' : '#ffffff')
         .linkWidth(2.5)
-        .linkTransparent(false)
         .linkOpacity(1.0)
         .linkCurvature(0.15)
         .linkDirectionalParticles(1)
@@ -44,12 +50,11 @@ try {
                     });
                 }
                 Graph.linkColor(Graph.linkColor());
-
                 if (node && node.type === 'file' && node.path) {
                     vscode.postMessage({ command: 'openFile', path: node.path });
                 }
             } catch (err) {
-                console.error('WebView: Click Error', err);
+                log('Click Error: ' + err.message);
             }
         })
         .onBackgroundClick(() => {
@@ -57,7 +62,6 @@ try {
             Graph.linkColor(Graph.linkColor());
         });
 
-    // Neo-Synapse Aesthetic
     Graph.nodeThreeObject(node => {
         const isDir = node.type === 'directory';
         const nodeColor = node.color || (isDir ? '#ff00ff' : '#00ffff');
@@ -95,7 +99,6 @@ try {
     Graph.linkThreeObjectExtend(true);
     Graph.linkDirectionalParticleColor(link => highlightLinks.has(link) ? '#ffff00' : '#ffffff');
 
-    // Animation Loop
     function animate() {
         pulseObjects.forEach(obj => {
             obj.t += obj.speed;
@@ -106,27 +109,39 @@ try {
         requestAnimationFrame(animate);
     }
     animate();
+    log('Animation loop started');
 
 } catch (err) {
-    status.innerText = 'Error initializing 3D Graph: ' + err.message;
-    console.error('WebView: Graph Init Error', err);
+    status.innerText = 'Graph Init Error: ' + err.message;
+    log('Graph Init Error: ' + err.stack);
 }
 
-// 2. Messaging
+// Global error catcher
+window.onerror = function (msg, url, line) {
+    log(`Runtime Error: ${msg} at ${url}:${line}`);
+};
+
 window.addEventListener('message', event => {
     const message = event.data;
-    try {
-        if (message.command === 'setData') {
-            console.log('WebView: Received data, nodes:', message.data?.nodes?.length);
-            status.style.display = 'none';
+    log('Received message: ' + (message ? message.command : 'undefined'));
+    if (message.command === 'setData') {
+        try {
             if (message.data && message.data.nodes) {
+                log(`Processing data: ${message.data.nodes.length} nodes`);
+                status.innerText = 'Rendering Graph...';
                 pulseObjects.length = 0;
                 Graph.graphData(message.data);
+                status.style.display = 'none';
                 setTimeout(() => { Graph.zoomToFit(600); }, 500);
+                log('Data applied successfully');
+            } else {
+                log('Received empty or invalid data');
+                status.innerText = 'Error: No nodes found in workspace';
             }
+        } catch (err) {
+            log('setData Error: ' + err.message);
+            status.innerText = 'Error processing data: ' + err.message;
         }
-    } catch (err) {
-        console.error('WebView: Message processing error', err);
     }
 });
 
@@ -134,5 +149,5 @@ window.addEventListener('resize', () => {
     if (Graph) Graph.width(window.innerWidth).height(window.innerHeight);
 });
 
-console.log('WebView: Ready signal sent');
+log('Sending ready signal');
 vscode.postMessage({ command: 'ready' });
