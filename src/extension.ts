@@ -15,12 +15,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 2. Register Commands
     context.subscriptions.push(
+        vscode.commands.registerCommand('synaptree.openSettings', () => {
+            vscode.commands.executeCommand('workbench.action.openSettings', 'synaptree');
+        }),
         vscode.commands.registerCommand('synaptree.visualize', () => {
             SynapTreePanel.createOrShow(context.extensionUri, outputChannel);
-        })
-    );
-
-    context.subscriptions.push(
+        }),
         vscode.commands.registerCommand('synaptree.refresh', () => {
             sidebarProvider.refresh();
             if (SynapTreePanel.currentPanel) {
