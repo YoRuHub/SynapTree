@@ -43,12 +43,21 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
 
     public refresh() {
         if (!this._view) {
+            this._outputChannel.appendLine('Refresh: View is not ready yet');
             return;
         }
-        const folders = vscode.workspace.workspaceFolders;
-        if (folders) {
-            const data = getWorkspaceData(folders[0].uri.fsPath, this._outputChannel);
-            this._view.webview.postMessage({ command: 'setData', data });
+        try {
+            const folders = vscode.workspace.workspaceFolders;
+            if (folders && folders.length > 0) {
+                this._outputChannel.appendLine(`Refresh: Fetching data for ${folders[0].uri.fsPath}`);
+                const data = getWorkspaceData(folders[0].uri.fsPath, this._outputChannel);
+                this._view.webview.postMessage({ command: 'setData', data });
+                this._outputChannel.appendLine(`Refresh: Data sent (${data.nodes.length} nodes)`);
+            } else {
+                this._outputChannel.appendLine('Refresh: No workspace folders found');
+            }
+        } catch (err) {
+            this._outputChannel.appendLine(`Refresh: Critical Error - ${err}`);
         }
     }
 }

@@ -9,10 +9,7 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [
-        "onView:synaptree-view",
-        "onCommand:synaptree.visualize"
-    ],
+    "activationEvents": [],
     "main": "./out/extension.js",
     "contributes": {
         "viewsContainers": {
@@ -52,6 +49,34 @@
                     "group": "navigation"
                 }
             ]
+        },
+        "configuration": {
+            "title": "SynapTree",
+            "properties": {
+                "synaptree.colors.directory": {
+                    "type": "string",
+                    "default": "#ff00ff",
+                    "description": "Color for directory nodes (Magenta/Soma)"
+                },
+                "synaptree.colors.defaultFile": {
+                    "type": "string",
+                    "default": "#00ffff",
+                    "description": "Fallback color for file nodes (Cyan)"
+                },
+                "synaptree.colors.extensions": {
+                    "type": "object",
+                    "default": {
+                        ".swift": "#ffac45",
+                        ".ts": "#3178c6",
+                        ".js": "#f7df1e",
+                        ".html": "#e34f26",
+                        ".css": "#1572b6",
+                        ".json": "#f5cb5c",
+                        ".md": "#9b51e0"
+                    },
+                    "description": "Mapping of file extensions to node colors"
+                }
+            }
         }
     },
     "scripts": {

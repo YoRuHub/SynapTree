@@ -8,6 +8,7 @@ export interface GraphNode {
     path: string;
     type: 'directory' | 'file';
     level: number;
+    color?: string;
 }
 
 export interface GraphLink {
@@ -24,6 +25,12 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
+    // Load configuration
+    const config = vscode.workspace.getConfiguration('synaptree.colors');
+    const dirColor = config.get<string>('directory', '#ff00ff');
+    const defaultFileColor = config.get<string>('defaultFile', '#00ffff');
+    const extensionMap = config.get<Record<string, string>>('extensions', {});
+
     if (outputChannel) {
         outputChannel.appendLine(`Scanning: ${rootPath}`);
     }
@@ -35,12 +42,24 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
             const name = path.basename(currentPath);
             const id = currentPath;
 
+            // Determine color
+            let color = defaultFileColor;
+            if (isDir) {
+                color = dirColor;
+            } else {
+                const ext = path.extname(name).toLowerCase();
+                if (extensionMap[ext]) {
+                    color = extensionMap[ext];
+                }
+            }
+
             nodes.push({
                 id,
                 name,
                 path: currentPath,
                 type: isDir ? 'directory' : 'file',
-                level: parentId ? 1 : 0
+                level: parentId ? 1 : 0,
+                color
             });
 
             if (parentId) {
