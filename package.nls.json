@@ -1,0 +1,13 @@
+{
+    "synaptree.config.title": "SynapTree",
+    "synaptree.config.colors.directory": "Color for directory nodes (Magenta/Soma)",
+    "synaptree.config.colors.defaultFile": "Fallback color for file nodes (Cyan)",
+    "synaptree.config.colors.extensions": "Mapping of file extensions to node colors. Add any extension here (e.g., .py: #ff0000)",
+    "synaptree.config.visuals.activeColor": "Global active link highlight color",
+    "synaptree.config.visuals.normalOpacity": "Opacity for inactive links (biological faint look)",
+    "synaptree.config.visuals.particleSpeed": "Speed of signal particles",
+    "synaptree.config.visuals.particleWidth": "Size of signal particles",
+    "synaptree.command.visualize": "SynapTree: Visualize Structure",
+    "synaptree.command.refresh": "SynapTree: Refresh Graph",
+    "synaptree.command.openSettings": "SynapTree: Open Settings"
+}

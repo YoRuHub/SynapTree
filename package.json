@@ -33,16 +33,16 @@
         "commands": [
             {
                 "command": "synaptree.visualize",
-                "title": "SynapTree: Visualize Structure"
+                "title": "%synaptree.command.visualize%"
             },
             {
                 "command": "synaptree.refresh",
-                "title": "SynapTree: Refresh Graph",
+                "title": "%synaptree.command.refresh%",
                 "icon": "$(refresh)"
             },
             {
                 "command": "synaptree.openSettings",
-                "title": "SynapTree: Open Settings",
+                "title": "%synaptree.command.openSettings%",
                 "icon": "$(gear)"
             }
         ],
@@ -61,17 +61,17 @@
             ]
         },
         "configuration": {
-            "title": "SynapTree",
+            "title": "%synaptree.config.title%",
             "properties": {
                 "synaptree.colors.directory": {
                     "type": "string",
                     "default": "#ff00ff",
-                    "description": "Color for directory nodes (Magenta/Soma)"
+                    "description": "%synaptree.config.colors.directory%"
                 },
                 "synaptree.colors.defaultFile": {
                     "type": "string",
                     "default": "#00ffff",
-                    "description": "Fallback color for file nodes (Cyan)"
+                    "description": "%synaptree.config.colors.defaultFile%"
                 },
                 "synaptree.colors.extensions": {
                     "type": "object",
@@ -82,29 +82,33 @@
                         ".html": "#e34f26",
                         ".css": "#1572b6",
                         ".json": "#f5cb5c",
-                        ".md": "#9b51e0"
+                        ".md": "#9b51e0",
+                        ".py": "#3776ab",
+                        ".go": "#00add8",
+                        ".rs": "#ce412b",
+                        ".kt": "#7f52ff"
                     },
-                    "description": "Mapping of file extensions to node colors"
+                    "description": "%synaptree.config.colors.extensions%"
                 },
                 "synaptree.visuals.activeColor": {
                     "type": "string",
                     "default": "#ffff00",
-                    "description": "Global active link highlight color"
+                    "description": "%synaptree.config.visuals.activeColor%"
                 },
                 "synaptree.visuals.normalOpacity": {
                     "type": "number",
                     "default": 0.2,
-                    "description": "Opacity for inactive links (biological faint look)"
+                    "description": "%synaptree.config.visuals.normalOpacity%"
                 },
                 "synaptree.visuals.particleSpeed": {
                     "type": "number",
                     "default": 0.005,
-                    "description": "Speed of signal particles"
+                    "description": "%synaptree.config.visuals.particleSpeed%"
                 },
                 "synaptree.visuals.particleWidth": {
                     "type": "number",
                     "default": 3.0,
-                    "description": "Size of signal particles"
+                    "description": "%synaptree.config.visuals.particleWidth%"
                 }
             }
         }
