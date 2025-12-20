@@ -29,7 +29,15 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
     const config = vscode.workspace.getConfiguration('synaptree.colors');
     const dirColor = config.get<string>('directory', '#ff00ff');
     const defaultFileColor = config.get<string>('defaultFile', '#00ffff');
-    const extensionMap = config.get<Record<string, string>>('extensions', {});
+
+    // Convert array of {extension, color} to Record<string, string>
+    const extensionArray = config.get<any[]>('extensions', []);
+    const extensionMap: Record<string, string> = {};
+    extensionArray.forEach(item => {
+        if (item.extension && item.color) {
+            extensionMap[item.extension.toLowerCase()] = item.color;
+        }
+    });
 
     if (outputChannel) {
         outputChannel.appendLine(`Scanning: ${rootPath}`);

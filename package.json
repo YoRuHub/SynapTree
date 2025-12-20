@@ -77,25 +77,68 @@
                     "description": "%synaptree.config.colors.defaultFile%"
                 },
                 "synaptree.colors.extensions": {
-                    "type": "object",
+                    "type": "array",
                     "markdownDescription": "%synaptree.config.colors.extensions%",
-                    "additionalProperties": {
-                        "type": "string",
-                        "format": "color-hex"
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "extension": {
+                                "type": "string",
+                                "description": "File extension (e.g. .ts, .swift)"
+                            },
+                            "color": {
+                                "type": "string",
+                                "format": "color-hex",
+                                "description": "Color code"
+                            }
+                        }
                     },
-                    "default": {
-                        ".swift": "#ffac45",
-                        ".ts": "#3178c6",
-                        ".js": "#f7df1e",
-                        ".html": "#e34f26",
-                        ".css": "#1572b6",
-                        ".json": "#f5cb5c",
-                        ".md": "#9b51e0",
-                        ".py": "#3776ab",
-                        ".go": "#00add8",
-                        ".rs": "#ce412b",
-                        ".kt": "#7f52ff"
-                    }
+                    "default": [
+                        {
+                            "extension": ".swift",
+                            "color": "#ffac45"
+                        },
+                        {
+                            "extension": ".ts",
+                            "color": "#3178c6"
+                        },
+                        {
+                            "extension": ".js",
+                            "color": "#f7df1e"
+                        },
+                        {
+                            "extension": ".html",
+                            "color": "#e34f26"
+                        },
+                        {
+                            "extension": ".css",
+                            "color": "#1572b6"
+                        },
+                        {
+                            "extension": ".json",
+                            "color": "#f5cb5c"
+                        },
+                        {
+                            "extension": ".md",
+                            "color": "#9b51e0"
+                        },
+                        {
+                            "extension": ".py",
+                            "color": "#3776ab"
+                        },
+                        {
+                            "extension": ".go",
+                            "color": "#00add8"
+                        },
+                        {
+                            "extension": ".rs",
+                            "color": "#ce412b"
+                        },
+                        {
+                            "extension": ".kt",
+                            "color": "#7f52ff"
+                        }
+                    ]
                 },
                 "synaptree.visuals.activeColor": {
                     "type": "string",

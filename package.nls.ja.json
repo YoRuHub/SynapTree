@@ -2,7 +2,7 @@
     "synaptree.config.title": "SynapTree",
     "synaptree.config.colors.directory": "ディレクトリ項目の色 (基本: マゼンタ)",
     "synaptree.config.colors.defaultFile": "ファイル項目のデフォルト色 (基本: シアン)",
-    "synaptree.config.colors.extensions": "拡張子ごとの色設定。新しい拡張子はここに追加してください (例: .py: #ff0000)",
+    "synaptree.config.colors.extensions": "拡張子ごとの色設定。「項目の追加」を押して拡張子名と色（パレットから選択可）を指定してください。",
     "synaptree.config.visuals.activeColor": "ハイライト時の軌道の線色",
     "synaptree.config.visuals.normalOpacity": "通常時の軌道の透明度 (0で非表示、1で不透明)",
     "synaptree.config.visuals.particleSpeed": "信号（粒子）が流れる速度",
