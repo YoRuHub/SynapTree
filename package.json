@@ -66,11 +66,13 @@
             "properties": {
                 "synaptree.colors.directory": {
                     "type": "string",
+                    "format": "color-hex",
                     "default": "#ff00ff",
                     "description": "%synaptree.config.colors.directory%"
                 },
                 "synaptree.colors.defaultFile": {
                     "type": "string",
+                    "format": "color-hex",
                     "default": "#00ffff",
                     "description": "%synaptree.config.colors.defaultFile%"
                 },
@@ -79,7 +81,7 @@
                     "markdownDescription": "%synaptree.config.colors.extensions%",
                     "additionalProperties": {
                         "type": "string",
-                        "format": "color"
+                        "format": "color-hex"
                     },
                     "default": {
                         ".swift": "#ffac45",
@@ -97,6 +99,7 @@
                 },
                 "synaptree.visuals.activeColor": {
                     "type": "string",
+                    "format": "color-hex",
                     "default": "#ffff00",
                     "description": "%synaptree.config.visuals.activeColor%"
                 },
