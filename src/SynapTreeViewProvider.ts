@@ -39,6 +39,9 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
                             vscode.window.showTextDocument(vscode.Uri.file(message.path));
                         }
                         break;
+                    case 'updateConfig':
+                        this._updateConfiguration(message.config);
+                        break;
                 }
             } catch (err) {
                 this._outputChannel.appendLine(`Error in Sidebar message handler: ${err}`);
@@ -64,5 +67,18 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         } catch (err) {
             this._outputChannel.appendLine(`Refresh: Critical Error - ${err}`);
         }
+    }
+
+    private async _updateConfiguration(config: any) {
+        const target = vscode.ConfigurationTarget.Workspace;
+        const synapConfig = vscode.workspace.getConfiguration('synaptree');
+
+        // This is a simplified update. In a production app, we'd map these to specific settings.
+        // For now, let's just log them as proof of concept or save them if settings exist.
+        if (config.activeColor) {
+            // Mapping back to the extension map might be complex, so let's just save the core aesthetics
+            await synapConfig.update('visuals.activeColor', config.activeColor, target);
+        }
+        this._outputChannel.appendLine(`Config updated: ${JSON.stringify(config)}`);
     }
 }
