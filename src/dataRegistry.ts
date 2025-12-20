@@ -31,13 +31,22 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
     const defaultFileColor = config.get<string>('defaultFile', '#00ffff');
 
     // Convert array of {extension, color} to Record<string, string>
-    const extensionArray = config.get<any[]>('extensions', []);
+    // Robust check: handle both legacy object format and new array format
+    const extensionsConfig = config.get<any>('extensions', []);
     const extensionMap: Record<string, string> = {};
-    extensionArray.forEach(item => {
-        if (item.extension && item.color) {
-            extensionMap[item.extension.toLowerCase()] = item.color;
+
+    if (Array.isArray(extensionsConfig)) {
+        extensionsConfig.forEach(item => {
+            if (item && item.extension && item.color) {
+                extensionMap[item.extension.toLowerCase()] = item.color;
+            }
+        });
+    } else if (typeof extensionsConfig === 'object' && extensionsConfig !== null) {
+        // Legacy support
+        for (const [ext, color] of Object.entries(extensionsConfig)) {
+            extensionMap[ext.toLowerCase()] = color as string;
         }
-    });
+    }
 
     if (outputChannel) {
         outputChannel.appendLine(`Scanning: ${rootPath}`);
