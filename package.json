@@ -76,6 +76,11 @@
                 },
                 "synaptree.colors.extensions": {
                     "type": "object",
+                    "markdownDescription": "%synaptree.config.colors.extensions%",
+                    "additionalProperties": {
+                        "type": "string",
+                        "format": "color"
+                    },
                     "default": {
                         ".swift": "#ffac45",
                         ".ts": "#3178c6",
@@ -88,8 +93,7 @@
                         ".go": "#00add8",
                         ".rs": "#ce412b",
                         ".kt": "#7f52ff"
-                    },
-                    "description": "%synaptree.config.colors.extensions%"
+                    }
                 },
                 "synaptree.visuals.activeColor": {
                     "type": "string",
