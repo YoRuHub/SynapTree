@@ -12,5 +12,7 @@
     "synaptree.command.visualize": "SynapTree: 構造を可視化",
     "synaptree.command.refresh": "SynapTree: グラフを更新",
     "synaptree.command.openSettings": "SynapTree: 設定を開く",
-    "synaptree.command.search": "SynapTree: ノードを検索"
+    "synaptree.command.search": "SynapTree: ノードを検索",
+    "synaptree.command.showLabels": "ラベルを表示",
+    "synaptree.command.hideLabels": "ラベルを隠す"
 }

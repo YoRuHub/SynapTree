@@ -18,16 +18,18 @@ if (typeof ForceGraph3D !== 'function') {
     log('3d-force-graph library detected');
 }
 
+
 let highlightLinks = new Set();
 const pulseObjects = [];
+window.showLabels = true; // Default to showing labels
 let Graph;
 
 try {
     Graph = ForceGraph3D()(elem)
         .backgroundColor('#000308')
         .nodeColor(node => node.color || '#00ffff')
-        .nodeLabel(node => `<div class="node-label">${node.name}</div>`)
-        .linkColor(link => highlightLinks.has(link) ? 'rgba(255, 255, 0, 0.4)' : 'rgba(255, 255, 255, 0.12)')
+        // .nodeLabel removed - using custom TextSprite in nodeThreeObject
+        .linkColor(link => highlightLinks.has(link) ? 'rgba(255, 255, 0, 0.8)' : 'rgba(255, 255, 255, 0.25)')
         .linkWidth(1.5)
         .linkOpacity(1.0)
         .linkCurvature(0.2)
@@ -66,53 +68,147 @@ try {
         .onBackgroundClick(() => {
             highlightLinks.clear();
             Graph.linkColor(Graph.linkColor());
+            // Call hideSearch handled in global scope but also here for safety
+            const searchContainer = document.getElementById('search-container');
+            const searchInput = document.getElementById('search-input');
+            if (searchContainer) searchContainer.classList.remove('visible');
+            if (searchInput) searchInput.value = '';
+            pulseObjects.forEach(obj => { obj.isMatch = false; });
+            status.style.display = 'none';
         });
+
+    // Caches for performance
+    const geometryCache = {
+        coreDir: new THREE.IcosahedronGeometry(10, 1),
+        coreFile: new THREE.IcosahedronGeometry(4, 1),
+        innerGlowDir: new THREE.IcosahedronGeometry(14, 1),
+        innerGlowFile: new THREE.IcosahedronGeometry(5.6, 1),
+        auraDir: new THREE.SphereGeometry(22, 16, 16),
+        auraFile: new THREE.SphereGeometry(8.8, 16, 16)
+    };
+
+    const materialCache = new Map();
+
+    function getCachedMaterial(color, type) {
+        const key = `${color}-${type}`;
+        if (!materialCache.has(key)) {
+            let mat;
+            if (type === 'core') {
+                mat = new THREE.MeshPhongMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.5,
+                    transparent: true,
+                    opacity: 0.9,
+                    shininess: 100
+                });
+            } else if (type === 'inner') {
+                mat = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.2,
+                    blending: THREE.AdditiveBlending
+                });
+            } else if (type === 'aura') {
+                mat = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.08,
+                    blending: THREE.AdditiveBlending,
+                    side: THREE.BackSide
+                });
+            }
+            materialCache.set(key, mat);
+        }
+        return materialCache.get(key);
+    }
+
+    function createTextSprite(text) {
+        const canvas = document.createElement('canvas');
+        const fontSize = 64; // Increased resolution
+        const padding = 20;
+        const font = `Bold ${fontSize}px Arial, sans-serif`;
+
+        const context = canvas.getContext('2d');
+        context.font = font;
+
+        // Calculate text width
+        const metrics = context.measureText(text);
+        const textWidth = metrics.width;
+
+        // Resize canvas to fit text
+        canvas.width = textWidth + padding * 2;
+        canvas.height = fontSize + padding * 2;
+
+        // Re-apply font after resize
+        context.font = font;
+        context.fillStyle = 'rgba(255, 255, 255, 1.0)';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+
+        // Shadow/Glow for readability
+        context.shadowColor = 'rgba(0,0,0,1.0)';
+        context.shadowBlur = 6;
+        context.shadowOffsetX = 3;
+        context.shadowOffsetY = 3;
+
+        context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            depthTest: false, // Ensure label is always seen on top of local aura
+            depthWrite: false
+        });
+        const sprite = new THREE.Sprite(spriteMaterial);
+
+        // Render order high to appear on top of transparent auras
+        sprite.renderOrder = 999;
+
+        // Scale sprite based on aspect ratio
+        const scaleFactor = 0.5;
+        sprite.scale.set(canvas.width / fontSize * 10 * scaleFactor, canvas.height / fontSize * 10 * scaleFactor, 1);
+
+        return sprite;
+    }
 
     Graph.nodeThreeObject(node => {
         const isDir = node.type === 'directory';
         const nodeColor = node.color || (isDir ? '#ff00ff' : '#00ffff');
-        const size = isDir ? 10 : 4;
 
         const group = new THREE.Group();
 
         // 1. Core crystalline geometry
         const core = new THREE.Mesh(
-            new THREE.IcosahedronGeometry(size, 1),
-            new THREE.MeshPhongMaterial({
-                color: nodeColor,
-                emissive: nodeColor,
-                emissiveIntensity: 0.5,
-                transparent: true,
-                opacity: 0.9,
-                shininess: 100
-            })
+            isDir ? geometryCache.coreDir : geometryCache.coreFile,
+            getCachedMaterial(nodeColor, 'core').clone()
         );
         group.add(core);
 
         // 2. Inner glow shell
         const innerGlow = new THREE.Mesh(
-            new THREE.IcosahedronGeometry(size * 1.4, 1),
-            new THREE.MeshBasicMaterial({
-                color: nodeColor,
-                transparent: true,
-                opacity: 0.2,
-                blending: THREE.AdditiveBlending
-            })
+            isDir ? geometryCache.innerGlowDir : geometryCache.innerGlowFile,
+            getCachedMaterial(nodeColor, 'inner').clone()
         );
         group.add(innerGlow);
 
         // 3. Outer phantasmal aura
         const aura = new THREE.Mesh(
-            new THREE.SphereGeometry(size * 2.2, 16, 16),
-            new THREE.MeshBasicMaterial({
-                color: nodeColor,
-                transparent: true,
-                opacity: 0.08,
-                blending: THREE.AdditiveBlending,
-                side: THREE.BackSide
-            })
+            isDir ? geometryCache.auraDir : geometryCache.auraFile,
+            getCachedMaterial(nodeColor, 'aura').clone()
         );
         group.add(aura);
+
+        // 4. Permanent Label (Sprite)
+        const labelSprite = createTextSprite(node.name);
+        // Position below the aura. Aura radius is ~22 for dirs, ~9 for files.
+        const yOffset = isDir ? -35 : -18;
+        labelSprite.position.y = yOffset;
+
+        // Ensure initial visibility logic respects window.showLabels
+        labelSprite.visible = (window.showLabels !== false);
+        group.add(labelSprite);
 
         pulseObjects.push({
             nodeId: node.id,
@@ -120,6 +216,7 @@ try {
             core,
             innerGlow,
             aura,
+            labelSprite, // Track for toggling
             t: Math.random() * 10,
             speed: isDir ? 0.015 : 0.03,
             isMatch: false
@@ -249,7 +346,8 @@ window.addEventListener('message', event => {
                 status.innerText = `${message.data.nodes.length} nodes loaded`;
                 setTimeout(() => {
                     status.style.display = 'none';
-                    Graph.zoomToFit(600);
+                    // Use a closer camera position instead of fitting everything (which can be too far)
+                    Graph.cameraPosition({ z: 400 }, null, 1200);
                 }, 1500);
                 log('Data applied successfully');
             } else {
@@ -277,6 +375,23 @@ window.addEventListener('message', event => {
                 }, 300);
             }
         }
+    } else if (message.command === 'toggleLabels') {
+        const showLabels = !window.showLabels;
+        window.showLabels = showLabels;
+
+        // Toggle visibility of existing sprite labels
+        pulseObjects.forEach(obj => {
+            if (obj.labelSprite) {
+                obj.labelSprite.visible = showLabels;
+            }
+        });
+
+        status.style.display = 'block';
+        status.innerText = showLabels ? 'Labels: ON' : 'Labels: OFF';
+        status.style.opacity = '1';
+        setTimeout(() => {
+            status.style.opacity = '0';
+        }, 1500);
     }
 });
 

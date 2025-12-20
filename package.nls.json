@@ -12,5 +12,7 @@
     "synaptree.command.visualize": "SynapTree: Visualize Structure",
     "synaptree.command.refresh": "SynapTree: Refresh Graph",
     "synaptree.command.openSettings": "SynapTree: Open Settings",
-    "synaptree.command.search": "SynapTree: Search Nodes"
+    "synaptree.command.search": "SynapTree: Search Nodes",
+    "synaptree.command.showLabels": "Show Labels",
+    "synaptree.command.hideLabels": "Hide Labels"
 }

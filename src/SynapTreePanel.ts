@@ -77,12 +77,18 @@ export class SynapTreePanel {
         }
     }
 
-    public refresh() {
+    public toggleLabels() {
+        if (this._panel) {
+            this._panel.webview.postMessage({ command: 'toggleLabels' });
+        }
+    }
+
+    public async refresh() {
         try {
             const folders = vscode.workspace.workspaceFolders;
             if (folders && folders.length > 0) {
                 this._outputChannel.appendLine(`Panel Refresh: Fetching data for ${folders[0].uri.fsPath}`);
-                const data = getWorkspaceData(folders[0].uri.fsPath, this._outputChannel);
+                const data = await getWorkspaceData(folders[0].uri.fsPath, this._outputChannel);
                 this._panel.webview.postMessage({ command: 'setData', data });
                 this._outputChannel.appendLine(`Panel Refresh: Data sent (${data.nodes.length} nodes)`);
             } else {

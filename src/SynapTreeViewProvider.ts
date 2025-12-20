@@ -53,7 +53,13 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    public refresh() {
+    public toggleLabels() {
+        if (this._view) {
+            this._view.webview.postMessage({ command: 'toggleLabels' });
+        }
+    }
+
+    public async refresh() {
         if (!this._view) {
             this._outputChannel.appendLine('Refresh: View is not ready yet');
             return;
@@ -62,7 +68,7 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
             const folders = vscode.workspace.workspaceFolders;
             if (folders && folders.length > 0) {
                 this._outputChannel.appendLine(`Refresh: Fetching data for ${folders[0].uri.fsPath}`);
-                const data = getWorkspaceData(folders[0].uri.fsPath, this._outputChannel);
+                const data = await getWorkspaceData(folders[0].uri.fsPath, this._outputChannel);
                 this._view.webview.postMessage({ command: 'setData', data });
                 this._outputChannel.appendLine(`Refresh: Data sent (${data.nodes.length} nodes)`);
             } else {

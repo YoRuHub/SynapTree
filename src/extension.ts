@@ -33,8 +33,29 @@ export function activate(context: vscode.ExtensionContext) {
             if (SynapTreePanel.currentPanel) {
                 SynapTreePanel.currentPanel.search('');
             }
+        }),
+        vscode.commands.registerCommand('synaptree.hideLabels', () => {
+            // Set context to false (switch to "Show" icon)
+            vscode.commands.executeCommand('setContext', 'synaptree:labelsVisible', false);
+            // Toggle webview state
+            sidebarProvider.toggleLabels();
+            if (SynapTreePanel.currentPanel) {
+                SynapTreePanel.currentPanel.toggleLabels();
+            }
+        }),
+        vscode.commands.registerCommand('synaptree.showLabels', () => {
+            // Set context to true (switch to "Hide" icon)
+            vscode.commands.executeCommand('setContext', 'synaptree:labelsVisible', true);
+            // Toggle webview state
+            sidebarProvider.toggleLabels();
+            if (SynapTreePanel.currentPanel) {
+                SynapTreePanel.currentPanel.toggleLabels();
+            }
         })
     );
+
+    // Initialize context
+    vscode.commands.executeCommand('setContext', 'synaptree:labelsVisible', true);
 }
 
 export function deactivate() {

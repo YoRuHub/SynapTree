@@ -21,7 +21,7 @@ export interface GraphData {
     links: GraphLink[];
 }
 
-export function getWorkspaceData(rootPath: string, outputChannel?: vscode.OutputChannel): GraphData {
+export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.OutputChannel): Promise<GraphData> {
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
@@ -55,9 +55,9 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
         outputChannel.appendLine(`Scanning: ${rootPath}`);
     }
 
-    function traverse(currentPath: string, parentId?: string) {
+    async function traverse(currentPath: string, parentId?: string): Promise<void> {
         try {
-            const stats = fs.statSync(currentPath);
+            const stats = await fs.promises.stat(currentPath);
             const isDir = stats.isDirectory();
             const name = path.basename(currentPath);
             const id = currentPath;
@@ -100,17 +100,19 @@ export function getWorkspaceData(rootPath: string, outputChannel?: vscode.Output
             }
 
             if (isDir) {
-                const files = fs.readdirSync(currentPath);
-                files.forEach(file => traverse(path.join(currentPath, file), id));
+                const children = await fs.promises.readdir(currentPath);
+                // Parallelize children processing
+                await Promise.all(children.map(child => traverse(path.join(currentPath, child), id)));
             }
         } catch (err) {
+            // Ignore access errors or races
             if (outputChannel) {
                 outputChannel.appendLine(`Error scanning ${currentPath}: ${err}`);
             }
         }
     }
 
-    traverse(rootPath);
+    await traverse(rootPath);
 
     if (outputChannel) {
         outputChannel.appendLine(`Found ${nodes.length} nodes`);

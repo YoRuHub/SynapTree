@@ -50,6 +50,16 @@
                 "command": "synaptree.search",
                 "title": "%synaptree.command.search%",
                 "icon": "$(search)"
+            },
+            {
+                "command": "synaptree.hideLabels",
+                "title": "%synaptree.command.hideLabels%",
+                "icon": "$(eye)"
+            },
+            {
+                "command": "synaptree.showLabels",
+                "title": "%synaptree.command.showLabels%",
+                "icon": "$(eye-closed)"
             }
         ],
         "menus": {
@@ -60,14 +70,24 @@
                     "group": "navigation@0"
                 },
                 {
+                    "command": "synaptree.hideLabels",
+                    "when": "view == synaptree-view && synaptree:labelsVisible",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "synaptree.showLabels",
+                    "when": "view == synaptree-view && !synaptree:labelsVisible",
+                    "group": "navigation@1"
+                },
+                {
                     "command": "synaptree.refresh",
                     "when": "view == synaptree-view",
-                    "group": "navigation@1"
+                    "group": "navigation@2"
                 },
                 {
                     "command": "synaptree.openSettings",
                     "when": "view == synaptree-view",
-                    "group": "navigation@2"
+                    "group": "navigation@3"
                 }
             ]
         },
