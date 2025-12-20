@@ -37,8 +37,22 @@
             {
                 "command": "synaptree.visualize",
                 "title": "SynapTree: Visualize Structure"
+            },
+            {
+                "command": "synaptree.refresh",
+                "title": "SynapTree: Refresh Graph",
+                "icon": "$(refresh)"
             }
-        ]
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "synaptree.refresh",
+                    "when": "view == synaptree-view",
+                    "group": "navigation"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
