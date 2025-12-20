@@ -2,6 +2,14 @@
 
 All notable changes to the "SynapTree" extension will be documented in this file.
 
+## [0.0.3] - 2025-12-20
+### Fixed
+- Updated changelog documentation.
+
+## [0.0.2] - 2025-12-20
+### Fixed
+- Included missing webview assets (HTML/JS) in the extension package.
+
 ## [0.0.1] - 2025-12-20
 
 ### Added

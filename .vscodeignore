@@ -2,7 +2,8 @@
 .gitignore
 .vscode
 .vscode-test
-src
+src/**/*.ts
+!src/webview/**
 tsconfig.json
 .eslintrc.json
 vsc-extension-quickstart.md
