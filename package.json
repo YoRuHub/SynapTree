@@ -3,10 +3,25 @@
     "displayName": "SynapTree",
     "description": "3D File System Visualization",
     "version": "0.0.1",
+    "publisher": "yoru",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yoru/SynapTree.git"
+    },
+    "keywords": [
+        "3d",
+        "visualization",
+        "filesystem",
+        "graph",
+        "productivity",
+        "file-explorer"
+    ],
     "engines": {
         "vscode": "^1.80.0"
     },
     "categories": [
+        "Visualization",
         "Other"
     ],
     "activationEvents": [],
