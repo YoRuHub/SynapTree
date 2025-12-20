@@ -39,6 +39,11 @@
                 "command": "synaptree.refresh",
                 "title": "SynapTree: Refresh Graph",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "synaptree.openSettings",
+                "title": "SynapTree: Open Settings",
+                "icon": "$(gear)"
             }
         ],
         "menus": {
@@ -46,7 +51,12 @@
                 {
                     "command": "synaptree.refresh",
                     "when": "view == synaptree-view",
-                    "group": "navigation"
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "synaptree.openSettings",
+                    "when": "view == synaptree-view",
+                    "group": "navigation@2"
                 }
             ]
         },
@@ -80,6 +90,21 @@
                     "type": "string",
                     "default": "#ffff00",
                     "description": "Global active link highlight color"
+                },
+                "synaptree.visuals.normalOpacity": {
+                    "type": "number",
+                    "default": 0.2,
+                    "description": "Opacity for inactive links (biological faint look)"
+                },
+                "synaptree.visuals.particleSpeed": {
+                    "type": "number",
+                    "default": 0.005,
+                    "description": "Speed of signal particles"
+                },
+                "synaptree.visuals.particleWidth": {
+                    "type": "number",
+                    "default": 3.0,
+                    "description": "Size of signal particles"
                 }
             }
         }
