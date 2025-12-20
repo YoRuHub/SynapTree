@@ -2,7 +2,7 @@
 
 **SynapTree** transforms your code structure into a stunning, interactive 3D universe. Explore your file system as a living neural network, where each node is a crystalline entity and every dependency is a flowing signal.
 
-![SynapTree Visualization](https://raw.githubusercontent.com/yoru/SynapTree/main/resources/preview.png)
+
 
 ## ✨ Features
 
