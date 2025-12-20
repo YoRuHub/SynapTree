@@ -27,14 +27,13 @@ try {
         .backgroundColor('#000308')
         .nodeColor(node => node.color || '#00ffff')
         .nodeLabel(node => `<div class="node-label">${node.name}</div>`)
-        // Standardizing width at 2.5. Further dim active to 50% for subtle glow.
-        .linkColor(link => highlightLinks.has(link) ? 'rgba(255, 255, 0, 0.5)' : 'rgba(255, 255, 255, 0.2)')
-        .linkWidth(2.5)
+        .linkColor(link => highlightLinks.has(link) ? 'rgba(255, 255, 0, 0.4)' : 'rgba(255, 255, 255, 0.12)')
+        .linkWidth(1.5)
         .linkOpacity(1.0)
-        .linkCurvature(0.15)
+        .linkCurvature(0.2)
         .linkDirectionalParticles(1)
-        .linkDirectionalParticleSpeed(0.005)
-        .linkDirectionalParticleWidth(3.0)
+        .linkDirectionalParticleSpeed(0.006)
+        .linkDirectionalParticleWidth(2.0)
         .dagMode('radialout')
         .dagLevelDistance(250)
         .onNodeClick(node => {
@@ -75,29 +74,52 @@ try {
         const size = isDir ? 10 : 4;
 
         const group = new THREE.Group();
-        const sphere = new THREE.Mesh(
-            new THREE.SphereGeometry(size, 24, 24),
-            new THREE.MeshBasicMaterial({ color: nodeColor, transparent: true, opacity: 0.95 })
-        );
-        group.add(sphere);
 
-        const glow = new THREE.Mesh(
-            new THREE.SphereGeometry(size * 1.8, 16, 16),
+        // 1. Core crystalline geometry
+        const core = new THREE.Mesh(
+            new THREE.IcosahedronGeometry(size, 1),
+            new THREE.MeshPhongMaterial({
+                color: nodeColor,
+                emissive: nodeColor,
+                emissiveIntensity: 0.5,
+                transparent: true,
+                opacity: 0.9,
+                shininess: 100
+            })
+        );
+        group.add(core);
+
+        // 2. Inner glow shell
+        const innerGlow = new THREE.Mesh(
+            new THREE.IcosahedronGeometry(size * 1.4, 1),
             new THREE.MeshBasicMaterial({
                 color: nodeColor,
                 transparent: true,
-                opacity: 0.15,
+                opacity: 0.2,
+                blending: THREE.AdditiveBlending
+            })
+        );
+        group.add(innerGlow);
+
+        // 3. Outer phantasmal aura
+        const aura = new THREE.Mesh(
+            new THREE.SphereGeometry(size * 2.2, 16, 16),
+            new THREE.MeshBasicMaterial({
+                color: nodeColor,
+                transparent: true,
+                opacity: 0.08,
                 blending: THREE.AdditiveBlending,
                 side: THREE.BackSide
             })
         );
-        group.add(glow);
+        group.add(aura);
 
         pulseObjects.push({
             nodeId: node.id,
             node: node,
-            sphere,
-            glow,
+            core,
+            innerGlow,
+            aura,
             t: Math.random() * 10,
             speed: isDir ? 0.015 : 0.03,
             isMatch: false
@@ -113,21 +135,29 @@ try {
         pulseObjects.forEach(obj => {
             obj.t += obj.speed;
 
-            // Highlight glow for matches
             if (obj.isMatch) {
-                const s = 1.3 + Math.sin(obj.t * 2) * 0.3; // Stronger, faster pulse for matches
-                obj.sphere.scale.set(s, s, s);
-                obj.glow.scale.set(s * 1.5, s * 1.5, s * 1.5);
-                obj.glow.material.opacity = 0.6;
-                obj.glow.material.color.set('#ffff00');
+                // High-freq radiance for matches
+                const s = 1.3 + Math.sin(obj.t * 3) * 0.35;
+                obj.core.scale.set(s, s, s);
+                obj.innerGlow.scale.set(s * 1.5, s * 1.5, s * 1.5);
+                obj.aura.scale.set(s * 2.5, s * 2.5, s * 2.5);
+
+                obj.innerGlow.material.opacity = 0.5;
+                obj.aura.material.opacity = 0.3;
+                obj.innerGlow.material.color.set('#ffff00');
+                obj.aura.material.color.set('#ffffcc');
             } else {
-                const s = 1 + Math.sin(obj.t) * 0.15;
-                obj.sphere.scale.set(s, s, s);
-                obj.glow.scale.set(s, s, s);
-                obj.glow.material.opacity = 0.15;
-                // Revert to original node color if not a match
+                // Standard organic pulse
+                const s = 1 + Math.sin(obj.t) * 0.12;
+                obj.core.scale.set(s, s, s);
+                obj.innerGlow.scale.set(s, s, s);
+                obj.aura.scale.set(s, s, s);
+
+                obj.innerGlow.material.opacity = 0.15;
+                obj.aura.material.opacity = 0.06;
                 const nodeColor = obj.node.color || (obj.node.type === 'directory' ? '#ff00ff' : '#00ffff');
-                obj.glow.material.color.set(nodeColor);
+                obj.innerGlow.material.color.set(nodeColor);
+                obj.aura.material.color.set(nodeColor);
             }
         });
         requestAnimationFrame(animate);
