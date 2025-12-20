@@ -99,7 +99,7 @@ try {
     });
 
     Graph.linkThreeObjectExtend(true);
-    Graph.linkDirectionalParticleColor(link => highlightLinks.has(link) ? '#ffff00' : '#ffffff');
+    Graph.linkDirectionalParticleColor(link => highlightLinks.has(link) ? 'rgba(255, 255, 0, 0.8)' : '#ffffff');
 
     function animate() {
         pulseObjects.forEach(obj => {
