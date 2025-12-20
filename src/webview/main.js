@@ -149,6 +149,36 @@ window.addEventListener('message', event => {
             log('setData Error: ' + err.message);
             status.innerText = 'Error processing data: ' + err.message;
         }
+    } else if (message.command === 'search') {
+        const query = (message.query || '').toLowerCase();
+        if (!query) {
+            highlightLinks.clear();
+            Graph.linkColor(Graph.linkColor());
+            status.style.display = 'none';
+            return;
+        }
+
+        const { nodes } = Graph.graphData();
+        const matches = nodes.filter(n => n.name.toLowerCase().includes(query));
+
+        if (matches.length > 0) {
+            status.innerText = `${matches.length} matches found for "${query}"`;
+            status.style.display = 'block';
+            status.style.backgroundColor = 'rgba(255, 255, 0, 0.2)';
+
+            // To highlight "glow", we can temporarily modify the pulse properties or color
+            // For now, let's just zoom to the first match if it exists
+            setTimeout(() => {
+                Graph.zoomToFit(600, 100, node => matches.includes(node));
+            }, 100);
+        } else {
+            status.innerText = `No matches found for "${query}"`;
+            status.style.display = 'block';
+            status.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+        }
+
+        // Auto-hide status after 3 seconds
+        setTimeout(() => { status.style.display = 'none'; }, 3000);
     }
 });
 

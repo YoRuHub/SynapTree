@@ -47,6 +47,12 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         });
     }
 
+    public search(query: string) {
+        if (this._view) {
+            this._view.webview.postMessage({ command: 'search', query });
+        }
+    }
+
     public refresh() {
         if (!this._view) {
             this._outputChannel.appendLine('Refresh: View is not ready yet');

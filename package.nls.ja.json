@@ -11,5 +11,6 @@
     "synaptree.config.general.ignorePatterns": "除外するファイルまたはディレクトリ（パターン指定可）。例: .git, node_modules, *.tmp",
     "synaptree.command.visualize": "SynapTree: 構造を可視化",
     "synaptree.command.refresh": "SynapTree: グラフを更新",
-    "synaptree.command.openSettings": "SynapTree: 設定を開く"
+    "synaptree.command.openSettings": "SynapTree: 設定を開く",
+    "synaptree.command.search": "SynapTree: ノードを検索"
 }

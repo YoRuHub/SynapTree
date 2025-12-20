@@ -45,10 +45,20 @@
                 "command": "synaptree.openSettings",
                 "title": "%synaptree.command.openSettings%",
                 "icon": "$(gear)"
+            },
+            {
+                "command": "synaptree.search",
+                "title": "%synaptree.command.search%",
+                "icon": "$(search)"
             }
         ],
         "menus": {
             "view/title": [
+                {
+                    "command": "synaptree.search",
+                    "when": "view == synaptree-view",
+                    "group": "navigation@0"
+                },
                 {
                     "command": "synaptree.refresh",
                     "when": "view == synaptree-view",

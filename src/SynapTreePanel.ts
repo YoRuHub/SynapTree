@@ -71,6 +71,12 @@ export class SynapTreePanel {
         );
     }
 
+    public search(query: string) {
+        if (this._panel) {
+            this._panel.webview.postMessage({ command: 'search', query });
+        }
+    }
+
     public refresh() {
         try {
             const folders = vscode.workspace.workspaceFolders;

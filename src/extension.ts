@@ -27,6 +27,18 @@ export function activate(context: vscode.ExtensionContext) {
                 SynapTreePanel.currentPanel.refresh();
             }
             outputChannel.appendLine('Workspace Refresh Triggered');
+        }),
+        vscode.commands.registerCommand('synaptree.search', async () => {
+            const query = await vscode.window.showInputBox({
+                placeHolder: 'Search nodes (e.g. main.js)',
+                prompt: 'Enter part of a filename or directory to highlight'
+            });
+            if (query !== undefined) {
+                sidebarProvider.search(query);
+                if (SynapTreePanel.currentPanel) {
+                    SynapTreePanel.currentPanel.search(query);
+                }
+            }
         })
     );
 }

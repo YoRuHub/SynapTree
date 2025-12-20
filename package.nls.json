@@ -11,5 +11,6 @@
     "synaptree.config.general.ignorePatterns": "Files or directories to ignore (glob patterns supported). e.g. .git, node_modules, *.tmp",
     "synaptree.command.visualize": "SynapTree: Visualize Structure",
     "synaptree.command.refresh": "SynapTree: Refresh Graph",
-    "synaptree.command.openSettings": "SynapTree: Open Settings"
+    "synaptree.command.openSettings": "SynapTree: Open Settings",
+    "synaptree.command.search": "SynapTree: Search Nodes"
 }
