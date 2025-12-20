@@ -2,7 +2,7 @@
     "name": "synaptree",
     "displayName": "SynapTree",
     "description": "3D File System Visualization",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "icon": "resources/logo.jpg",
     "publisher": "YoRuHub",
     "license": "MIT",
@@ -115,6 +115,12 @@
                     "format": "color-hex",
                     "default": "#ff00ff",
                     "description": "%synaptree.config.colors.directory%"
+                },
+                "synaptree.colors.root": {
+                    "type": "string",
+                    "format": "color-hex",
+                    "default": "#ffffff",
+                    "description": "Color for the root node"
                 },
                 "synaptree.colors.defaultFile": {
                     "type": "string",

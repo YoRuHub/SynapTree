@@ -36,8 +36,8 @@ try {
         .linkDirectionalParticles(1)
         .linkDirectionalParticleSpeed(0.006)
         .linkDirectionalParticleWidth(2.0)
-        .dagMode('radialout')
-        .dagLevelDistance(250)
+        // .dagMode('radialout')  <-- Disabled to allow manual node movement (root included)
+        // .dagLevelDistance(250) <-- Disabled
         .onNodeClick(node => {
             try {
                 highlightLinks.clear();

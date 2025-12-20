@@ -28,6 +28,7 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
     // Load configuration
     const config = vscode.workspace.getConfiguration('synaptree.colors');
     const dirColor = config.get<string>('directory', '#ff00ff');
+    const rootColor = config.get<string>('root', '#ffffff');
     const defaultFileColor = config.get<string>('defaultFile', '#00ffff');
 
     // Robust check: handle both legacy object format and new array format
@@ -78,7 +79,7 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
             // Determine color
             let color = defaultFileColor;
             if (isDir) {
-                color = dirColor;
+                color = (!parentId) ? rootColor : dirColor;
             } else {
                 const ext = path.extname(name).toLowerCase();
                 if (extensionMap[ext]) {

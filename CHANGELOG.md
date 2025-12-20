@@ -2,6 +2,11 @@
 
 All notable changes to the "SynapTree" extension will be documented in this file.
 
+## [0.0.4] - 2025-12-20
+### Added
+- **Movable Root Node**: The root node is no longer fixed and can be dragged freely.
+- **Root Node Styling**: Added `synaptree.colors.root` setting to customize the root node color (default: white), distinct from other directories.
+
 ## [0.0.3] - 2025-12-20
 ### Fixed
 - Updated changelog documentation.
