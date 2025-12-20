@@ -7,6 +7,7 @@
     "synaptree.config.visuals.normalOpacity": "通常時の軌道の透明度 (0で非表示、1で不透明)",
     "synaptree.config.visuals.particleSpeed": "信号（粒子）が流れる速度",
     "synaptree.config.visuals.particleWidth": "信号（粒子）の大きさ",
+    "synaptree.config.general.language": "表示言語。'auto' の場合は VS Code の設定に従います。",
     "synaptree.command.visualize": "SynapTree: 構造を可視化",
     "synaptree.command.refresh": "SynapTree: グラフを更新",
     "synaptree.command.openSettings": "SynapTree: 設定を開く"
