@@ -136,18 +136,20 @@ try {
             obj.t += obj.speed;
 
             if (obj.isMatch) {
-                // High-freq radiance for matches
-                const s = 1.3 + Math.sin(obj.t * 3) * 0.35;
+                // Stable radiance - no jarring scale change
+                const s = 1.6; // Keep constant size for matches
                 obj.core.scale.set(s, s, s);
                 obj.innerGlow.scale.set(s * 1.5, s * 1.5, s * 1.5);
                 obj.aura.scale.set(s * 2.5, s * 2.5, s * 2.5);
 
-                obj.innerGlow.material.opacity = 0.5;
-                obj.aura.material.opacity = 0.3;
+                // Subtle high-freq flicker (opacity only)
+                const flicker = 0.4 + Math.sin(obj.t * 4) * 0.15;
+                obj.innerGlow.material.opacity = flicker;
+                obj.aura.material.opacity = flicker * 0.5;
                 obj.innerGlow.material.color.set('#ffff00');
                 obj.aura.material.color.set('#ffffcc');
             } else {
-                // Standard organic pulse
+                // Standard organic pulse (subtle)
                 const s = 1 + Math.sin(obj.t) * 0.12;
                 obj.core.scale.set(s, s, s);
                 obj.innerGlow.scale.set(s, s, s);
@@ -166,15 +168,24 @@ try {
     log('Animation loop started');
 
     // Real-time search handling
+    const searchContainer = document.getElementById('search-container');
     const searchInput = document.getElementById('search-input');
+    const searchClose = document.getElementById('search-close');
+
+    function hideSearch() {
+        if (searchContainer) searchContainer.classList.remove('visible');
+        if (searchInput) searchInput.value = '';
+        pulseObjects.forEach(obj => { obj.isMatch = false; });
+        status.style.display = 'none';
+        log('Search hidden');
+    }
+
     if (searchInput) {
         searchInput.addEventListener('input', () => {
             const query = searchInput.value.toLowerCase().trim();
             if (!query) {
                 status.style.display = 'none';
-                pulseObjects.forEach(obj => {
-                    obj.isMatch = false;
-                });
+                pulseObjects.forEach(obj => { obj.isMatch = false; });
                 return;
             }
 
@@ -202,6 +213,17 @@ try {
             }
         });
     }
+
+    if (searchClose) {
+        searchClose.addEventListener('click', hideSearch);
+    }
+
+    // Auto-hide search when background is clicked
+    Graph.onBackgroundClick(() => {
+        highlightLinks.clear();
+        Graph.linkColor(Graph.linkColor());
+        hideSearch();
+    });
 
 } catch (err) {
     status.innerText = 'Graph Init Error: ' + err.message;
@@ -239,10 +261,21 @@ window.addEventListener('message', event => {
             status.innerText = 'Error processing data: ' + err.message;
         }
     } else if (message.command === 'search') {
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-            searchInput.focus();
-            searchInput.select();
+        const searchContainer = document.getElementById('search-container');
+        if (searchContainer) {
+            if (searchContainer.classList.contains('visible')) {
+                const searchInput = document.getElementById('search-input');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            } else {
+                searchContainer.classList.add('visible');
+                setTimeout(() => {
+                    const searchInput = document.getElementById('search-input');
+                    if (searchInput) searchInput.focus();
+                }, 300);
+            }
         }
     }
 });
