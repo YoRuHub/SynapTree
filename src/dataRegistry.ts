@@ -21,6 +21,8 @@ export interface GraphData {
     links: GraphLink[];
 }
 
+// Helper to get Git status map - REMOVED
+
 export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.OutputChannel): Promise<GraphData> {
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];

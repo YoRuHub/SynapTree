@@ -1,31 +1,34 @@
 # Change Log
 
-All notable changes to the "SynapTree" extension will be documented in this file.
-
-## [0.0.5] - 2025-12-20
-### Fixed
-- Corrected repository URL in package metadata.
-- Restored standard relative link for License in README.
-
-## [0.0.4] - 2025-12-20
+## [0.0.6] - 2025-12-21
 ### Added
-- **Movable Root Node**: The root node is no longer fixed and can be dragged freely.
-- **Root Node Styling**: Added `synaptree.colors.root` setting to customize the root node color (default: white), distinct from other directories.
+- **High-Quality Node Visuals**: Nodes now feature a semi-transparent, cell-like glass effect (`MeshPhysicalMaterial`) for a premium look.
+- **Search Navigation**: Replaced the search close button with Previous/Next (`<` `>`) buttons to cycle through matched nodes.
+- **Ripple Effect**: Enhanced search result animation with a high-resolution, gold-colored expanding ripple ring.
+- **Auto-Focus**: Camera automatically transitions to focus on the selected search result.
 
-## [0.0.3] - 2025-12-20
+### Changed
+- Improved node material quality for better depth and transparency.
+- Refined search UI to only show navigation buttons when matches are found.
+
+## [0.0.5] - 2025-12-21
 ### Fixed
-- Updated changelog documentation.
+- Updated repository metadata in `package.json` to point to the correct public URL.
+- Fixed LICENSE link in `README.md`.
+- Removed experimental file management features to ensure stability.
 
-## [0.0.2] - 2025-12-20
-### Fixed
-- Included missing webview assets (HTML/JS) in the extension package.
-
-## [0.0.1] - 2025-12-20
-
+## [0.0.4] - 2025-12-21
 ### Added
-- **3D Visualization**: Initial release of the 3D Force-Directed Graph visualization.
-- **Permanent Labels**: 3D text sprites for file names with dynamic toggle support.
-- **Search System**: Real-time filtering with "supernova" highlight effects.
-- **Customization**: Native VS Code settings for colors, extension mapping, and visual parameters.
-- **Performance**: Geometry and material caching for efficient rendering.
-- **Multilingual Support**: English and Japanese localization.
+- **Movable Root Node**: The root node is now unlocked and can be dragged freely like other nodes.
+- **Distinct Root Color**: Root node can now be customized via `synaptree.colors.root` setting (default: `#ff0055`).
+
+## [0.0.3] - 2025-12-21
+### Fixed
+- Updated CHANGELOG to reflect recent fixes.
+
+## [0.0.2] - 2025-12-21
+### Fixed
+- Fixed `.vscodeignore` to correctly include `src/webview` assets, resolving blank screen issues in the packaged extension.
+
+## [0.0.1] - 2025-12-21
+- Initial release.

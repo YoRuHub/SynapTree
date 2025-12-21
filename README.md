@@ -7,13 +7,14 @@
 ## ✨ Features
 
 ### 🌌 Phantasmal 3D Visualization
-- **Crystalline Nodes**: Directories and files are rendered as glowing Icosahedrons.
+- **Cell-like Visuals**: Nodes are rendered as semi-transparent, glass-like entities created with `MeshPhysicalMaterial`.
 - **Organic Animations**: Nodes pulse with a rhythmic "heartbeat," making the graph feel alive.
 - **Ethereal Connections**: Dependencies utilize soft, phantom-like orbital lines with flowing signal particles.
 
 ### 🔍 Interactive Experience
 - **Real-time Search**: Press the search icon or use `Cmd+F` to open the glassmorphism search bar. 
-- **Supernova Highlights**: Matched nodes emit a high-intensity, stable flickering glow.
+- **Navigation**: Use `<` and `>` buttons to cycle through search results like a playlist.
+- **Ripple Highlights**: Matched nodes emit a stunning, expanding gold ripple.
 - **Permanent Labels**: File names are projected as 3D text sprites below each node for instant clarity.
 - **Dynamic Toggle**: Instantly show/hide labels with a dedicated toggle button ($eye / $eye-closed).
 

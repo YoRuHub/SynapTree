@@ -1,8 +1,8 @@
 {
     "name": "synaptree",
     "displayName": "SynapTree",
-    "description": "3D File System Visualization",
-    "version": "0.0.5",
+    "description": "Visualize your workspace in a 3D interactive graph.",
+    "version": "0.0.6",
     "icon": "resources/logo.jpg",
     "publisher": "YoRuHub",
     "license": "MIT",

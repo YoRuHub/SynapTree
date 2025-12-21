@@ -80,11 +80,11 @@ try {
     // Caches for performance
     const geometryCache = {
         coreDir: new THREE.IcosahedronGeometry(10, 1),
-        coreFile: new THREE.IcosahedronGeometry(4, 1),
+        coreFile: new THREE.IcosahedronGeometry(4, 0), // Optimized: Low Poly (20 tris)
         innerGlowDir: new THREE.IcosahedronGeometry(14, 1),
-        innerGlowFile: new THREE.IcosahedronGeometry(5.6, 1),
+        innerGlowFile: new THREE.IcosahedronGeometry(5.6, 0), // Optimized: Low Poly
         auraDir: new THREE.SphereGeometry(22, 16, 16),
-        auraFile: new THREE.SphereGeometry(8.8, 16, 16)
+        auraFile: new THREE.IcosahedronGeometry(10, 0) // Optimized: Replaced Sphere with Low Poly
     };
 
     const materialCache = new Map();
@@ -94,19 +94,24 @@ try {
         if (!materialCache.has(key)) {
             let mat;
             if (type === 'core') {
-                mat = new THREE.MeshPhongMaterial({
+                // High-quality Cell-like Material (Glass/Jelly)
+                mat = new THREE.MeshPhysicalMaterial({
                     color: color,
-                    emissive: color,
-                    emissiveIntensity: 0.5,
+                    metalness: 0.1,
+                    roughness: 0.15,
+                    transmission: 0.6, // Glass-like transparency
+                    thickness: 2.0, // Refraction volume
+                    clearcoat: 1.0, // Wet surface
+                    clearcoatRoughness: 0.1,
                     transparent: true,
-                    opacity: 0.9,
-                    shininess: 100
+                    opacity: 1.0 // Transmission handles visibility
                 });
             } else if (type === 'inner') {
+                // Soft inner glow (Nucleus)
                 mat = new THREE.MeshBasicMaterial({
                     color: color,
                     transparent: true,
-                    opacity: 0.2,
+                    opacity: 0.35, // Slightly more visible
                     blending: THREE.AdditiveBlending
                 });
             } else if (type === 'aura') {
@@ -173,6 +178,56 @@ try {
         return sprite;
     }
 
+    // Generic Ripple Texture (Cached)
+    const rippleTexture = (() => {
+        const size = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const cx = size / 2;
+        const cy = size / 2;
+
+        // Enable high-quality glow
+        ctx.shadowColor = '#ffd700'; // Gold glow
+        ctx.shadowBlur = 10;
+
+        // Ring 1: Main sharp ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, 100, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+
+        // Ring 2: Subtle secondary ring (inner)
+        ctx.beginPath();
+        ctx.arc(cx, cy, 85, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Ring 3: Subtle secondary ring (outer)
+        ctx.beginPath();
+        ctx.arc(cx, cy, 115, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        return new THREE.CanvasTexture(canvas);
+    })();
+
+    function createRippleSprite() {
+        // Reuse the texture, create new material for independent opacity control
+        const material = new THREE.SpriteMaterial({
+            map: rippleTexture,
+            transparent: true,
+            depthWrite: false,
+            depthTest: false,
+            blending: THREE.AdditiveBlending
+        });
+        return new THREE.Sprite(material);
+    }
+
     Graph.nodeThreeObject(node => {
         const isDir = node.type === 'directory';
         const nodeColor = node.color || (isDir ? '#ff00ff' : '#00ffff');
@@ -210,6 +265,12 @@ try {
         labelSprite.visible = (window.showLabels !== false);
         group.add(labelSprite);
 
+        // 5. Ripple Sprite (initially hidden)
+        const ripple = createRippleSprite();
+        ripple.visible = false;
+        ripple.scale.set(0, 0, 0); // Start small
+        group.add(ripple);
+
         pulseObjects.push({
             nodeId: node.id,
             node: node,
@@ -217,9 +278,11 @@ try {
             innerGlow,
             aura,
             labelSprite, // Track for toggling
+            ripple, // Track ripple
             t: Math.random() * 10,
             speed: isDir ? 0.015 : 0.03,
-            isMatch: false
+            isMatch: false,
+            baseScale: isDir ? 25 : 10 // Base size for ripple scaling
         });
 
         return group;
@@ -233,24 +296,36 @@ try {
             obj.t += obj.speed;
 
             if (obj.isMatch) {
-                // Stable radiance - no jarring scale change
-                const s = 1.6; // Keep constant size for matches
-                obj.core.scale.set(s, s, s);
-                obj.innerGlow.scale.set(s * 1.5, s * 1.5, s * 1.5);
-                obj.aura.scale.set(s * 2.5, s * 2.5, s * 2.5);
+                // Highlight Core
+                obj.core.scale.set(1.5, 1.5, 1.5);
+                obj.innerGlow.material.color.set('#ffd700');
+                obj.innerGlow.material.opacity = 0.5;
 
-                // Subtle high-freq flicker (opacity only)
-                const flicker = 0.4 + Math.sin(obj.t * 4) * 0.15;
-                obj.innerGlow.material.opacity = flicker;
-                obj.aura.material.opacity = flicker * 0.5;
-                obj.innerGlow.material.color.set('#ffff00');
-                obj.aura.material.color.set('#ffffcc');
+                // Hide texture aura to reduce noise, focus on ripple
+                obj.aura.visible = false;
+
+                // Ripple Animation (White Line)
+                obj.ripple.visible = true;
+                const rippleSpeed = 1.0;
+                const cycle = (obj.t * rippleSpeed) % 1;
+
+                // Expand from base size to 4x
+                const s = obj.baseScale * (1 + cycle * 3);
+                obj.ripple.scale.set(s, s, 1);
+
+                // Fade out
+                obj.ripple.material.opacity = 1.0 * (1 - Math.pow(cycle, 3));
+
             } else {
                 // Standard organic pulse (subtle)
                 const s = 1 + Math.sin(obj.t) * 0.12;
                 obj.core.scale.set(s, s, s);
                 obj.innerGlow.scale.set(s, s, s);
                 obj.aura.scale.set(s, s, s);
+
+                // Reset visibility and colors
+                obj.aura.visible = true;
+                obj.ripple.visible = false;
 
                 obj.innerGlow.material.opacity = 0.15;
                 obj.aura.material.opacity = 0.06;
@@ -267,58 +342,120 @@ try {
     // Real-time search handling
     const searchContainer = document.getElementById('search-container');
     const searchInput = document.getElementById('search-input');
-    const searchClose = document.getElementById('search-close');
+    const searchPrev = document.getElementById('search-prev');
+    const searchNext = document.getElementById('search-next');
+    const searchCount = document.getElementById('search-results-count');
+
+    let matchedNodes = [];
+    let currentMatchIndex = -1;
 
     function hideSearch() {
         if (searchContainer) searchContainer.classList.remove('visible');
         if (searchInput) searchInput.value = '';
         pulseObjects.forEach(obj => { obj.isMatch = false; });
         status.style.display = 'none';
+        matchedNodes = [];
+        currentMatchIndex = -1;
+        if (searchCount) searchCount.innerText = '';
         log('Search hidden');
+    }
+
+    function focusOnNode(node) {
+        if (!node) return;
+
+        // Aim at the node from a distance
+        const distance = 120;
+        const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
+
+        const newPos = node.x || node.y || node.z
+            ? { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }
+            : { x: 0, y: 0, z: distance }; // Fallback for specific 0,0,0 cases
+
+        Graph.cameraPosition(
+            newPos, // new position
+            node,   // lookAt ({ x, y, z })
+            1500    // ms transition duration
+        );
+    }
+
+    function updateNavState() {
+        if (matchedNodes.length > 0) {
+            searchCount.innerText = `${currentMatchIndex + 1} / ${matchedNodes.length}`;
+            if (searchPrev) searchPrev.style.display = 'flex';
+            if (searchNext) searchNext.style.display = 'flex';
+        } else {
+            searchCount.innerText = '';
+            if (searchPrev) searchPrev.style.display = 'none';
+            if (searchNext) searchNext.style.display = 'none';
+        }
     }
 
     if (searchInput) {
         searchInput.addEventListener('input', () => {
             const query = searchInput.value.toLowerCase().trim();
+            matchedNodes = [];
+            currentMatchIndex = -1;
+
             if (!query) {
                 status.style.display = 'none';
                 pulseObjects.forEach(obj => { obj.isMatch = false; });
+                updateNavState();
                 return;
             }
 
             const { nodes } = Graph.graphData();
-            let matchCount = 0;
 
             pulseObjects.forEach(obj => {
                 const node = nodes.find(n => n.id === obj.nodeId || n === obj.node);
                 if (node && node.name.toLowerCase().includes(query)) {
                     obj.isMatch = true;
-                    matchCount++;
+                    matchedNodes.push(node);
                 } else {
                     obj.isMatch = false;
                 }
             });
 
-            if (matchCount > 0) {
-                status.innerText = `${matchCount} matches found`;
+            if (matchedNodes.length > 0) {
+                status.innerText = `${matchedNodes.length} matches found`;
                 status.style.display = 'block';
                 status.style.backgroundColor = 'rgba(255, 255, 0, 0.1)';
+
+                // Auto-select first match
+                currentMatchIndex = 0;
+                focusOnNode(matchedNodes[0]);
             } else {
                 status.innerText = 'No matches found';
                 status.style.display = 'block';
                 status.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
             }
+            updateNavState();
         });
     }
 
-    if (searchClose) {
-        searchClose.addEventListener('click', hideSearch);
+    if (searchPrev) {
+        searchPrev.addEventListener('click', () => {
+            if (matchedNodes.length === 0) return;
+            currentMatchIndex = (currentMatchIndex - 1 + matchedNodes.length) % matchedNodes.length;
+            focusOnNode(matchedNodes[currentMatchIndex]);
+            updateNavState();
+        });
+    }
+
+    if (searchNext) {
+        searchNext.addEventListener('click', () => {
+            if (matchedNodes.length === 0) return;
+            currentMatchIndex = (currentMatchIndex + 1) % matchedNodes.length;
+            focusOnNode(matchedNodes[currentMatchIndex]);
+            updateNavState();
+        });
     }
 
     // Auto-hide search when background is clicked
     Graph.onBackgroundClick(() => {
         highlightLinks.clear();
         Graph.linkColor(Graph.linkColor());
+        // hideSearch(); // User might want to keep search open while clicking around? 
+        // Let's keep hideSearch on background click for now, as per original behavior.
         hideSearch();
     });
 

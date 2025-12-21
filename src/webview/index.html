@@ -63,26 +63,36 @@
             box-shadow: 0 0 20px rgba(255, 255, 0, 0.15);
         }
 
-        #search-close {
+        .search-nav-btn {
             width: 36px;
             height: 36px;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            color: rgba(255, 255, 255, 0.6);
-            display: flex;
+            color: rgba(255, 255, 255, 0.8);
+            display: none;
+            /* Hidden by default */
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 14px;
             transition: all 0.2s ease;
+            user-select: none;
         }
 
-        #search-close:hover {
-            background: rgba(255, 0, 0, 0.2);
+        .search-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
             color: #fff;
-            border-color: rgba(255, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        #search-results-count {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0 8px;
+            white-space: nowrap;
         }
 
         #status {
@@ -120,7 +130,10 @@
 <body>
     <div id="search-container">
         <input type="text" id="search-input" placeholder="Search structures..." autocomplete="off">
-        <div id="search-close" title="Close Search">×</div>
+        <span id="search-results-count"></span>
+        <div id="search-prev" class="search-nav-btn" title="Previous Match">❮</div>
+        <div style="width: 5px;"></div>
+        <div id="search-next" class="search-nav-btn" title="Next Match">❯</div>
     </div>
     <div id="status">Initializing 3D Environment...</div>
     <div id="graph"></div>
