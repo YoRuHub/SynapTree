@@ -1,154 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:; connect-src https://cdn.jsdelivr.net;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src ${cspSource} https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:; connect-src https://cdn.jsdelivr.net;"
+    />
     <title>SynapTree</title>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.73.0/dist/3d-force-graph.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            background-color: #000;
-            color: #fff;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+      body {
+        margin: 0;
+        background-color: #000;
+        color: #fff;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        width: 100vw;
+        height: 100vh;
+      }
 
-        #search-container {
+      #search-container {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        z-index: 1000;
+        width: 85%;
+        max-width: 420px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        pointer-events: none;
+      }
+
+      #search-container.visible {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      #search-input {
+        flex-grow: 1;
+        padding: 12px 20px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 25px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+
+      #search-input:focus {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 0, 0.3);
+        box-shadow: 0 0 20px rgba(255, 255, 0, 0.15);
+      }
+
+      .search-nav-btn {
+        width: 24px;
+        height: 36px;
+        background: transparent;
+        border: none;
+        backdrop-filter: none;
+        color: rgba(255, 255, 255, 0.5);
+        display: none;
+        /* Hidden by default */
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+        transition: color 0.2s ease;
+        user-select: none;
+      }
+
+      .search-nav-btn:hover {
+        background: transparent;
+        color: #fff;
+        box-shadow: none;
+        border: none;
+      }
+
+      #search-results-count {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        margin: 0 8px;
+        white-space: nowrap;
+      }
+
+      #search-status {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        font-size: 12px;
+        pointer-events: none;
+        text-align: center;
+        padding: 5px 15px;
+        border-radius: 15px;
+        background: rgba(0, 0, 0, 0.5);
+        color: rgba(255, 255, 255, 0.7);
+        display: none;
+      }
+
+      #graph {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .node-label {
+        color: #fff;
+        font-family: sans-serif;
+        font-size: 12px;
+        padding: 2px 4px;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 4px;
+        pointer-events: none;
+      }
+
+        #breadcrumb {
             position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
+            bottom: 0px;
+            left: 0px;
+            /* Allow width to grow but cap at screen width */
+            max-width: 100%;
+            padding: 2px 6px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-family: monospace;
+            font-size: 12px;
             z-index: 1000;
-            width: 85%;
-            max-width: 420px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-            pointer-events: none;
-        }
-
-        #search-container.visible {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        #search-input {
-            flex-grow: 1;
-            padding: 12px 20px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 25px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        #search-input:focus {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 0, 0.3);
-            box-shadow: 0 0 20px rgba(255, 255, 0, 0.15);
-        }
-
-        .search-nav-btn {
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            color: rgba(255, 255, 255, 0.8);
             display: none;
-            /* Hidden by default */
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-
-        .search-nav-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-        }
-
-        #search-results-count {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
-            margin: 0 8px;
             white-space: nowrap;
+            align-items: center;
+            pointer-events: auto;
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+            box-sizing: border-box; /* Include padding in width */
         }
-
-        #status {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            font-size: 12px;
-            pointer-events: none;
-            text-align: center;
-            padding: 5px 15px;
-            border-radius: 15px;
-            background: rgba(0, 0, 0, 0.5);
-            color: rgba(255, 255, 255, 0.7);
+        #breadcrumb::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
         }
-
-        #graph {
-            width: 100vw;
-            height: 100vh;
+        .breadcrumb-item {
+            cursor: pointer;
+            padding: 0 1px;
+            border-radius: 2px;
+            color: #888;
+            transition: color 0.1s;
+            display: inline-block;
         }
-
-        .node-label {
-            color: #fff;
-            font-family: sans-serif;
-            font-size: 12px;
-            padding: 2px 4px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 4px;
-            pointer-events: none;
+        .breadcrumb-item:hover {
+            color: #ccc;
+            text-decoration: underline;
+            background: transparent;
+        }
+        .breadcrumb-separator {
+            color: #555;
+            margin: 0 2px;
+            display: inline-block;
         }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <script>
-        window.addEventListener('error', function (event) {
-            const status = document.getElementById('status');
-            if (status) {
-                status.style.display = 'block';
-                status.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
-                status.innerText = 'Error: ' + (event.message || event);
-                console.error('Global Error:', event.error || event.message);
-            }
-        });
+      window.addEventListener("error", function (event) {
+        const status = document.getElementById("status");
+        if (status) {
+          status.style.display = "block";
+          status.style.backgroundColor = "rgba(255, 0, 0, 0.5)";
+          status.innerText = "Error: " + (event.message || event);
+          console.error("Global Error:", event.error || event.message);
+        }
+      });
     </script>
     <div id="search-container">
-        <input type="text" id="search-input" placeholder="Search structures..." autocomplete="off">
-        <span id="search-results-count"></span>
-        <div id="search-prev" class="search-nav-btn" title="Previous Match">❮</div>
-        <div style="width: 5px;"></div>
-        <div id="search-next" class="search-nav-btn" title="Next Match">❯</div>
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Search structures..."
+        autocomplete="off"
+      />
+      <span id="search-results-count"></span>
+      <div id="search-prev" class="search-nav-btn" title="Previous Match">
+        ❮
+      </div>
+      <div style="width: 5px"></div>
+      <div id="search-next" class="search-nav-btn" title="Next Match">❯</div>
     </div>
+    <div id="breadcrumb"></div>
     <div id="status">Initializing 3D Environment...</div>
     <div id="graph"></div>
     <script type="module" src="${scriptUri}"></script>
-</body>
-
+  </body>
 </html>

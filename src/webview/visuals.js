@@ -6,14 +6,14 @@ window.showLabels = true; // Still global for now or move to State
 
 const geometryCache = {
     coreDir: new THREE.IcosahedronGeometry(10, 1),
-    coreFile: new THREE.IcosahedronGeometry(4, 0),
+    coreFile: new THREE.IcosahedronGeometry(6, 0),
     coreRoot: new THREE.SphereGeometry(12, 32, 32),
-    innerGlowDir: new THREE.IcosahedronGeometry(14, 1),
-    innerGlowFile: new THREE.IcosahedronGeometry(5.6, 0),
-    innerGlowRoot: new THREE.SphereGeometry(16, 32, 32),
-    auraDir: new THREE.SphereGeometry(22, 16, 16),
-    auraFile: new THREE.IcosahedronGeometry(10, 0),
-    auraRoot: new THREE.SphereGeometry(26, 32, 32)
+    innerGlowDir: new THREE.IcosahedronGeometry(11, 1),
+    innerGlowFile: new THREE.IcosahedronGeometry(7, 0),
+    innerGlowRoot: new THREE.SphereGeometry(13.5, 32, 32),
+    auraDir: new THREE.SphereGeometry(14, 16, 16),
+    auraFile: new THREE.IcosahedronGeometry(9, 0),
+    auraRoot: new THREE.SphereGeometry(17, 32, 32)
 };
 
 const materialCache = new Map();
@@ -194,7 +194,7 @@ export function createNodeObject(node) {
 
     // 4. Label
     const labelSprite = createTextSprite(node.name);
-    const yOffset = isDir ? -35 : -18;
+    const yOffset = isDir ? -28 : -22;
     labelSprite.position.y = yOffset;
     labelSprite.material.color.set(node.gitStatus ? auraColor : '#ffffff');
     labelSprite.visible = (window.showLabels !== false);
@@ -217,7 +217,7 @@ export function createNodeObject(node) {
         t: Math.random() * 10,
         speed: isDir ? 0.015 : 0.03,
         isMatch: false,
-        baseScale: isDir ? 25 : 10,
+        baseScale: isDir ? 18 : 12,
         baseColor: baseColor
     });
 

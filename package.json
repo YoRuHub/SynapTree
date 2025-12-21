@@ -2,7 +2,7 @@
     "name": "synaptree",
     "displayName": "SynapTree",
     "description": "Visualize your workspace in a 3D interactive graph.",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "icon": "resources/logo.jpg",
     "publisher": "YoRuHub",
     "license": "MIT",
@@ -135,13 +135,22 @@
                     },
                     "default": [
                         "node_modules",
-                        ".git",
+                        ".*",
                         "out",
                         "dist",
-                        ".vscode-test",
                         "target",
                         "bin",
-                        ".DS_Store"
+                        "build",
+                        "coverage",
+                        "Pods",
+                        "DerivedData",
+                        "__pycache__",
+                        "venv",
+                        "env",
+                        "obj",
+                        "vendor",
+                        "tmp",
+                        "temp"
                     ],
                     "description": "%synaptree.config.general.ignorePatterns%"
                 },
@@ -175,13 +184,13 @@
                 "synaptree.colors.directory": {
                     "type": "string",
                     "format": "color-hex",
-                    "default": "#ff00ff",
+                    "default": "#0088ff",
                     "description": "%synaptree.config.colors.directory%"
                 },
                 "synaptree.colors.defaultFile": {
                     "type": "string",
                     "format": "color-hex",
-                    "default": "#00ffff",
+                    "default": "#aaaaaa",
                     "description": "%synaptree.config.colors.defaultFile%"
                 },
                 "synaptree.colors.extensions": {

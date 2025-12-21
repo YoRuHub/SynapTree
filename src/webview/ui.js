@@ -305,3 +305,71 @@ function setupSearch() {
         });
     }
 }
+
+export function updateBreadcrumbs(node) {
+    const breadcrumb = document.getElementById('breadcrumb');
+    if (!breadcrumb) return;
+
+    if (!node) {
+        breadcrumb.style.display = 'none';
+        return;
+    }
+
+    // Traverse up from node to root
+    const pathNodes = [node];
+    let current = node;
+    const { links, nodes } = State.Graph.graphData();
+
+    // Prevent infinite loops
+    let limit = 0;
+    while (current && limit < 100) {
+        const link = links.find(l => {
+            const tId = l.target.id || l.target;
+            return tId === current.id;
+        });
+
+        if (link) {
+            const sourceId = link.source.id || link.source;
+            const parent = nodes.find(n => n.id === sourceId);
+            if (parent) {
+                pathNodes.unshift(parent);
+                current = parent;
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+        limit++;
+    }
+
+    // Render
+    breadcrumb.innerHTML = '';
+    pathNodes.forEach((n, index) => {
+        const item = document.createElement('span');
+        item.className = 'breadcrumb-item';
+        // Use full path for tooltip?
+        item.title = n.path || n.name;
+        item.innerText = n.name;
+        
+        item.onclick = (e) => {
+            e.stopPropagation();
+            focusOnNode(n);
+            activateNode(n); // Highlight links
+            updateBreadcrumbs(n);
+        };
+
+        breadcrumb.appendChild(item);
+
+        if (index < pathNodes.length - 1) {
+            const sep = document.createElement('span');
+            sep.className = 'breadcrumb-separator';
+            sep.innerText = '/';
+            breadcrumb.appendChild(sep);
+        }
+    });
+
+    breadcrumb.style.display = 'flex';
+    // Auto-scroll to the right so the current file is visible
+    breadcrumb.scrollLeft = breadcrumb.scrollWidth;
+}

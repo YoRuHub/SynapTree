@@ -1,49 +1,79 @@
 # Change Log
 
-## [0.0.7] - 2025-12-21
+## [0.0.8] - 2025-12-21
+
 ### Added
+
+- **Interactive Breadcrumbs**: Added a clickable path navigation bar at the bottom of the screen to easily visualize and navigate the directory hierarchy.
+- **Smart Zoom**: The graph now automatically adjusts the camera distance on load to ensure all nodes are visible (`zoomToFit`).
+- **Mouse Controls Guide**: Added detailed mouse operation instructions to README.
+
+### Changed
+
+- **Default Ignore Patterns**: Expanded default ignore list to include `build`, `coverage`, `Pods`, `DerivedData`, and all dotfiles (`.*`) to reduce graph clutter.
+- **Improved Layout**: Fixed an issue where the graph would not resize correctly when the window was resized.
+- **UI Refinements**: Polished the breadcrumb UI to be unobtrusive (compact, bottom-left, transparent).
+
+## [0.0.7] - 2025-12-21
+
+### Added
+
 - **Git Status Visualization**: Nodes now dynamically reflect Git status (Modified, Untracked, Staged) with distinct colored auras, updating in real-time.
 - **Interactive Context Menu**: Introduced a full-featured right-click context menu for nodes, enabling actions like "Set as Root", "New File/Folder", "Rename", and "Delete".
 - **Editor Sync**: Added an "Auto-Focus" setting (`synaptree.general.autoFocus`) to automatically highlight and center the node in the graph when you open a file in the editor.
 
 ### Changed
+
 - **Performance Optimization**: Significantly improved performance when switching branches or handling large Git changes by implementing batch processing, preventing UI freezes.
 - **Visuals**: The Root node is now rendered as a distinct sphere to make it easily recognizable.
 - **Cleanup**: Removed all debug logging for a cleaner experience.
 
 ### Fixed
+
 - Fixed localization logic for better compatibility.
 - Fixed performance bottlenecks in large repositories.
 
 ## [0.0.6] - 2025-12-21
+
 ### Added
+
 - **High-Quality Node Visuals**: Nodes now feature a semi-transparent, cell-like glass effect (`MeshPhysicalMaterial`) for a premium look.
 - **Search Navigation**: Replaced the search close button with Previous/Next (`<` `>`) buttons to cycle through matched nodes.
 - **Ripple Effect**: Enhanced search result animation with a high-resolution, gold-colored expanding ripple ring.
 - **Auto-Focus**: Camera automatically transitions to focus on the selected search result.
 
 ### Changed
+
 - Improved node material quality for better depth and transparency.
 - Refined search UI to only show navigation buttons when matches are found.
 
 ## [0.0.5] - 2025-12-21
+
 ### Fixed
+
 - Updated repository metadata in `package.json` to point to the correct public URL.
 - Fixed LICENSE link in `README.md`.
 - Removed experimental file management features to ensure stability.
 
 ## [0.0.4] - 2025-12-21
+
 ### Added
+
 - **Movable Root Node**: The root node is now unlocked and can be dragged freely like other nodes.
 - **Distinct Root Color**: Root node can now be customized via `synaptree.colors.root` setting (default: `#ff0055`).
 
 ## [0.0.3] - 2025-12-21
+
 ### Fixed
+
 - Updated CHANGELOG to reflect recent fixes.
 
 ## [0.0.2] - 2025-12-21
+
 ### Fixed
+
 - Fixed `.vscodeignore` to correctly include `src/webview` assets, resolving blank screen issues in the packaged extension.
 
 ## [0.0.1] - 2025-12-21
+
 - Initial release.
