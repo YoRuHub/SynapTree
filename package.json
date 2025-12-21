@@ -2,7 +2,7 @@
     "name": "synaptree",
     "displayName": "SynapTree",
     "description": "Visualize your workspace in a 3D interactive graph.",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "icon": "resources/logo.jpg",
     "publisher": "YoRuHub",
     "license": "MIT",
@@ -24,6 +24,9 @@
     "categories": [
         "Visualization",
         "Other"
+    ],
+    "extensionDependencies": [
+        "vscode.git"
     ],
     "activationEvents": [],
     "main": "./out/extension.js",
@@ -76,6 +79,11 @@
                 "command": "synaptree.showLabels",
                 "title": "%synaptree.command.showLabels%",
                 "icon": "$(eye-closed)"
+            },
+            {
+                "command": "synaptree.resetSettings",
+                "title": "%synaptree.command.resetSettings%",
+                "icon": "$(discard)"
             }
         ],
         "menus": {
@@ -104,6 +112,11 @@
                     "command": "synaptree.openSettings",
                     "when": "view == synaptree-view",
                     "group": "navigation@3"
+                },
+                {
+                    "command": "synaptree.resetSettings",
+                    "when": "view == synaptree-view",
+                    "group": "navigation@4"
                 }
             ]
         },

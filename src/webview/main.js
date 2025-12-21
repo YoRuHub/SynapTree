@@ -9,7 +9,6 @@ function log(msg) {
 
 log('Script started');
 
-// 1. Initial Library Check
 if (typeof ForceGraph3D !== 'function') {
     const errorMsg = 'Error: 3d-force-graph library not found. Check connection/CSP.';
     status.innerText = errorMsg;
@@ -18,17 +17,42 @@ if (typeof ForceGraph3D !== 'function') {
     log('3d-force-graph library detected');
 }
 
+// --- CONFIGURATION CENTRAL ---
+const GIT_STATUS_CONFIG = {
+    modified: {
+        color: '#ffaa00', // Orange (VS Code Modified)
+        opacityGlow: 0.4,
+        opacityAura: 0.2
+    },
+    untracked: {
+        color: '#73c991', // Light Green (VS Code Untracked)
+        opacityGlow: 0.4,
+        opacityAura: 0.2
+    },
+    staged: {
+        color: '#55ff55', // Bright Green (Staged)
+        opacityGlow: 0.4,
+        opacityAura: 0.2
+    },
+    default: {
+        color: '#ffffff', // Fallback
+        opacityGlow: 0.15,
+        opacityAura: 0.06
+    }
+};
 
 let highlightLinks = new Set();
 const pulseObjects = [];
-window.showLabels = true; // Default to showing labels
+window.showLabels = true;
 let Graph;
+
+// Queue to hold Git Status updates arriving before Graph is ready
+const pendingUpdates = new Map();
 
 try {
     Graph = ForceGraph3D()(elem)
         .backgroundColor('#000308')
         .nodeColor(node => node.color || '#00ffff')
-        // .nodeLabel removed - using custom TextSprite in nodeThreeObject
         .linkColor(link => highlightLinks.has(link) ? 'rgba(255, 255, 0, 0.8)' : 'rgba(255, 255, 255, 0.25)')
         .linkWidth(1.5)
         .linkOpacity(1.0)
@@ -36,15 +60,11 @@ try {
         .linkDirectionalParticles(1)
         .linkDirectionalParticleSpeed(0.006)
         .linkDirectionalParticleWidth(2.0)
-        // .dagMode('radialout')  <-- Disabled to allow manual node movement (root included)
-        // .dagLevelDistance(250) <-- Disabled
         .onNodeClick(node => {
             try {
                 highlightLinks.clear();
                 if (node) {
                     const { links } = Graph.graphData();
-
-                    // Recursive highlight to the "tips" (subtree)
                     const traverse = (n) => {
                         links.forEach(l => {
                             const s = l.source.id || l.source;
@@ -68,7 +88,7 @@ try {
         .onBackgroundClick(() => {
             highlightLinks.clear();
             Graph.linkColor(Graph.linkColor());
-            // Call hideSearch handled in global scope but also here for safety
+
             const searchContainer = document.getElementById('search-container');
             const searchInput = document.getElementById('search-input');
             if (searchContainer) searchContainer.classList.remove('visible');
@@ -77,14 +97,13 @@ try {
             status.style.display = 'none';
         });
 
-    // Caches for performance
     const geometryCache = {
         coreDir: new THREE.IcosahedronGeometry(10, 1),
-        coreFile: new THREE.IcosahedronGeometry(4, 0), // Optimized: Low Poly (20 tris)
+        coreFile: new THREE.IcosahedronGeometry(4, 0),
         innerGlowDir: new THREE.IcosahedronGeometry(14, 1),
-        innerGlowFile: new THREE.IcosahedronGeometry(5.6, 0), // Optimized: Low Poly
+        innerGlowFile: new THREE.IcosahedronGeometry(5.6, 0),
         auraDir: new THREE.SphereGeometry(22, 16, 16),
-        auraFile: new THREE.IcosahedronGeometry(10, 0) // Optimized: Replaced Sphere with Low Poly
+        auraFile: new THREE.IcosahedronGeometry(10, 0)
     };
 
     const materialCache = new Map();
@@ -94,24 +113,22 @@ try {
         if (!materialCache.has(key)) {
             let mat;
             if (type === 'core') {
-                // High-quality Cell-like Material (Glass/Jelly)
                 mat = new THREE.MeshPhysicalMaterial({
                     color: color,
                     metalness: 0.1,
                     roughness: 0.15,
-                    transmission: 0.6, // Glass-like transparency
-                    thickness: 2.0, // Refraction volume
-                    clearcoat: 1.0, // Wet surface
+                    transmission: 0.6,
+                    thickness: 2.0,
+                    clearcoat: 1.0,
                     clearcoatRoughness: 0.1,
                     transparent: true,
-                    opacity: 1.0 // Transmission handles visibility
+                    opacity: 1.0
                 });
             } else if (type === 'inner') {
-                // Soft inner glow (Nucleus)
                 mat = new THREE.MeshBasicMaterial({
                     color: color,
                     transparent: true,
-                    opacity: 0.35, // Slightly more visible
+                    opacity: 0.35,
                     blending: THREE.AdditiveBlending
                 });
             } else if (type === 'aura') {
@@ -120,7 +137,7 @@ try {
                     transparent: true,
                     opacity: 0.08,
                     blending: THREE.AdditiveBlending,
-                    side: THREE.BackSide
+                    side: THREE.DoubleSide
                 });
             }
             materialCache.set(key, mat);
@@ -130,28 +147,22 @@ try {
 
     function createTextSprite(text) {
         const canvas = document.createElement('canvas');
-        const fontSize = 64; // Increased resolution
+        const fontSize = 64;
         const padding = 20;
         const font = `Bold ${fontSize}px Arial, sans-serif`;
 
         const context = canvas.getContext('2d');
         context.font = font;
-
-        // Calculate text width
         const metrics = context.measureText(text);
         const textWidth = metrics.width;
 
-        // Resize canvas to fit text
         canvas.width = textWidth + padding * 2;
         canvas.height = fontSize + padding * 2;
 
-        // Re-apply font after resize
         context.font = font;
         context.fillStyle = 'rgba(255, 255, 255, 1.0)';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-
-        // Shadow/Glow for readability
         context.shadowColor = 'rgba(0,0,0,1.0)';
         context.shadowBlur = 6;
         context.shadowOffsetX = 3;
@@ -163,22 +174,16 @@ try {
         const spriteMaterial = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            depthTest: false, // Ensure label is always seen on top of local aura
+            depthTest: false,
             depthWrite: false
         });
         const sprite = new THREE.Sprite(spriteMaterial);
-
-        // Render order high to appear on top of transparent auras
         sprite.renderOrder = 999;
-
-        // Scale sprite based on aspect ratio
         const scaleFactor = 0.5;
         sprite.scale.set(canvas.width / fontSize * 10 * scaleFactor, canvas.height / fontSize * 10 * scaleFactor, 1);
-
         return sprite;
     }
 
-    // Generic Ripple Texture (Cached)
     const rippleTexture = (() => {
         const size = 256;
         const canvas = document.createElement('canvas');
@@ -187,37 +192,29 @@ try {
         const ctx = canvas.getContext('2d');
         const cx = size / 2;
         const cy = size / 2;
-
-        // Enable high-quality glow
-        ctx.shadowColor = '#ffd700'; // Gold glow
+        ctx.shadowColor = '#ffffff';
         ctx.shadowBlur = 10;
-
-        // Ring 1: Main sharp ring
         ctx.beginPath();
         ctx.arc(cx, cy, 100, 0, 2 * Math.PI);
-        ctx.strokeStyle = '#ffd700';
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 6;
         ctx.stroke();
 
-        // Ring 2: Subtle secondary ring (inner)
         ctx.beginPath();
         ctx.arc(cx, cy, 85, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.lineWidth = 3;
         ctx.stroke();
 
-        // Ring 3: Subtle secondary ring (outer)
         ctx.beginPath();
         ctx.arc(cx, cy, 115, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.lineWidth = 3;
         ctx.stroke();
-
         return new THREE.CanvasTexture(canvas);
     })();
 
     function createRippleSprite() {
-        // Reuse the texture, create new material for independent opacity control
         const material = new THREE.SpriteMaterial({
             map: rippleTexture,
             transparent: true,
@@ -228,47 +225,78 @@ try {
         return new THREE.Sprite(material);
     }
 
+    // --- NODE CREATION ---
     Graph.nodeThreeObject(node => {
         const isDir = node.type === 'directory';
-        const nodeColor = node.color || (isDir ? '#ff00ff' : '#00ffff');
+
+        // Base Color: Determined by file type or default
+        const baseColor = node.color || (isDir ? '#0088ff' : '#aaaaaa');
+
+        // Defaults
+        // User requested "Glass-like faint white blur" for the outermost layer
+        let auraColor = '#ffffff'; // Default to White for correct material caching
+        let innerColor = baseColor;
+
+        let opacityGlow = GIT_STATUS_CONFIG.default.opacityGlow;
+        let opacityAura = 0.00; // Completely transparent default
+        let emissiveInt = 0.5;
+
+        // Apply Configuration from central object (Overrides defaults if status exists)
+        if (node.gitStatus && GIT_STATUS_CONFIG[node.gitStatus]) {
+            const conf = GIT_STATUS_CONFIG[node.gitStatus];
+            auraColor = conf.color;
+            // innerColor remains baseColor (User Request: Only outer aura changes)
+            opacityGlow = conf.opacityGlow;
+            opacityAura = conf.opacityAura;
+            emissiveInt = 1.0;
+        }
 
         const group = new THREE.Group();
 
-        // 1. Core crystalline geometry
+        // 1. Core
+        const coreMat = getCachedMaterial(baseColor, 'core').clone();
+        coreMat.emissive.set(baseColor);
+        coreMat.emissiveIntensity = emissiveInt;
+
         const core = new THREE.Mesh(
             isDir ? geometryCache.coreDir : geometryCache.coreFile,
-            getCachedMaterial(nodeColor, 'core').clone()
+            coreMat
         );
         group.add(core);
 
-        // 2. Inner glow shell
+        // 2. Inner Glow
+        const glowMat = getCachedMaterial(innerColor, 'inner').clone();
+        glowMat.opacity = opacityGlow;
         const innerGlow = new THREE.Mesh(
             isDir ? geometryCache.innerGlowDir : geometryCache.innerGlowFile,
-            getCachedMaterial(nodeColor, 'inner').clone()
+            glowMat
         );
         group.add(innerGlow);
+        innerGlow.visible = true;
 
-        // 3. Outer phantasmal aura
+        // 3. Outer Aura
+        const auraMat = getCachedMaterial(auraColor, 'aura').clone();
+        auraMat.opacity = opacityAura;
         const aura = new THREE.Mesh(
             isDir ? geometryCache.auraDir : geometryCache.auraFile,
-            getCachedMaterial(nodeColor, 'aura').clone()
+            auraMat
         );
+        // Ensure DoubleSide is picked up by getCachedMaterial ('aura')
         group.add(aura);
+        aura.visible = true;
 
-        // 4. Permanent Label (Sprite)
+        // 4. Label
         const labelSprite = createTextSprite(node.name);
-        // Position below the aura. Aura radius is ~22 for dirs, ~9 for files.
         const yOffset = isDir ? -35 : -18;
         labelSprite.position.y = yOffset;
-
-        // Ensure initial visibility logic respects window.showLabels
+        labelSprite.material.color.set(node.gitStatus ? auraColor : '#ffffff');
         labelSprite.visible = (window.showLabels !== false);
         group.add(labelSprite);
 
-        // 5. Ripple Sprite (initially hidden)
+        // 5. Ripple
         const ripple = createRippleSprite();
         ripple.visible = false;
-        ripple.scale.set(0, 0, 0); // Start small
+        ripple.scale.set(0, 0, 0);
         group.add(ripple);
 
         pulseObjects.push({
@@ -277,12 +305,13 @@ try {
             core,
             innerGlow,
             aura,
-            labelSprite, // Track for toggling
-            ripple, // Track ripple
+            labelSprite,
+            ripple,
             t: Math.random() * 10,
             speed: isDir ? 0.015 : 0.03,
             isMatch: false,
-            baseScale: isDir ? 25 : 10 // Base size for ripple scaling
+            baseScale: isDir ? 25 : 10,
+            baseColor: baseColor
         });
 
         return group;
@@ -296,42 +325,49 @@ try {
             obj.t += obj.speed;
 
             if (obj.isMatch) {
-                // Highlight Core
+                const flashColor = obj.baseColor;
                 obj.core.scale.set(1.5, 1.5, 1.5);
-                obj.innerGlow.material.color.set('#ffd700');
-                obj.innerGlow.material.opacity = 0.5;
-
-                // Hide texture aura to reduce noise, focus on ripple
                 obj.aura.visible = false;
-
-                // Ripple Animation (White Line)
+                obj.innerGlow.visible = false;
                 obj.ripple.visible = true;
+                obj.ripple.material.color.set(flashColor);
                 const rippleSpeed = 1.0;
                 const cycle = (obj.t * rippleSpeed) % 1;
-
-                // Expand from base size to 4x
                 const s = obj.baseScale * (1 + cycle * 3);
                 obj.ripple.scale.set(s, s, 1);
-
-                // Fade out
                 obj.ripple.material.opacity = 1.0 * (1 - Math.pow(cycle, 3));
-
             } else {
-                // Standard organic pulse (subtle)
                 const s = 1 + Math.sin(obj.t) * 0.12;
                 obj.core.scale.set(s, s, s);
                 obj.innerGlow.scale.set(s, s, s);
                 obj.aura.scale.set(s, s, s);
-
-                // Reset visibility and colors
                 obj.aura.visible = true;
+                obj.innerGlow.visible = true;
                 obj.ripple.visible = false;
 
-                obj.innerGlow.material.opacity = 0.15;
-                obj.aura.material.opacity = 0.06;
-                const nodeColor = obj.node.color || (obj.node.type === 'directory' ? '#ff00ff' : '#00ffff');
-                obj.innerGlow.material.color.set(nodeColor);
-                obj.aura.material.color.set(nodeColor);
+                // --- COLOR LOGIC (Loop with Status) ---
+                let targetInnerColor = obj.baseColor;
+                let targetOuterColor = '#ffffff'; // Default Glassy White
+                let targetOpacityGlow = GIT_STATUS_CONFIG.default.opacityGlow;
+                let targetOpacityAura = 0.02; // Completely transparent default
+
+                // Use centralized config
+                if (obj.node.gitStatus && GIT_STATUS_CONFIG[obj.node.gitStatus]) {
+                    const conf = GIT_STATUS_CONFIG[obj.node.gitStatus];
+                    // innerColor NOT changed (User Request)
+                    targetOuterColor = conf.color;
+                    targetOpacityGlow = conf.opacityGlow;
+                    targetOpacityAura = conf.opacityAura;
+                }
+
+                obj.innerGlow.material.color.set(targetInnerColor);
+                obj.aura.material.color.set(targetOuterColor);
+                obj.innerGlow.material.opacity = targetOpacityGlow;
+                obj.aura.material.opacity = targetOpacityAura;
+
+                if (obj.labelSprite) {
+                    obj.labelSprite.material.color.set(obj.node.gitStatus ? targetOuterColor : '#ffffff');
+                }
             }
         });
         requestAnimationFrame(animate);
@@ -339,7 +375,6 @@ try {
     animate();
     log('Animation loop started');
 
-    // Real-time search handling
     const searchContainer = document.getElementById('search-container');
     const searchInput = document.getElementById('search-input');
     const searchPrev = document.getElementById('search-prev');
@@ -362,20 +397,12 @@ try {
 
     function focusOnNode(node) {
         if (!node) return;
-
-        // Aim at the node from a distance
         const distance = 120;
         const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
-
         const newPos = node.x || node.y || node.z
             ? { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }
-            : { x: 0, y: 0, z: distance }; // Fallback for specific 0,0,0 cases
-
-        Graph.cameraPosition(
-            newPos, // new position
-            node,   // lookAt ({ x, y, z })
-            1500    // ms transition duration
-        );
+            : { x: 0, y: 0, z: distance };
+        Graph.cameraPosition(newPos, node, 1500);
     }
 
     function updateNavState() {
@@ -395,16 +422,13 @@ try {
             const query = searchInput.value.toLowerCase().trim();
             matchedNodes = [];
             currentMatchIndex = -1;
-
             if (!query) {
                 status.style.display = 'none';
                 pulseObjects.forEach(obj => { obj.isMatch = false; });
                 updateNavState();
                 return;
             }
-
             const { nodes } = Graph.graphData();
-
             pulseObjects.forEach(obj => {
                 const node = nodes.find(n => n.id === obj.nodeId || n === obj.node);
                 if (node && node.name.toLowerCase().includes(query)) {
@@ -414,13 +438,10 @@ try {
                     obj.isMatch = false;
                 }
             });
-
             if (matchedNodes.length > 0) {
                 status.innerText = `${matchedNodes.length} matches found`;
                 status.style.display = 'block';
                 status.style.backgroundColor = 'rgba(255, 255, 0, 0.1)';
-
-                // Auto-select first match
                 currentMatchIndex = 0;
                 focusOnNode(matchedNodes[0]);
             } else {
@@ -450,12 +471,9 @@ try {
         });
     }
 
-    // Auto-hide search when background is clicked
     Graph.onBackgroundClick(() => {
         highlightLinks.clear();
         Graph.linkColor(Graph.linkColor());
-        // hideSearch(); // User might want to keep search open while clicking around? 
-        // Let's keep hideSearch on background click for now, as per original behavior.
         hideSearch();
     });
 
@@ -464,14 +482,38 @@ try {
     log('Graph Init Error: ' + err.stack);
 }
 
-// Global error catcher
 window.onerror = function (msg, url, line) {
     log(`Runtime Error: ${msg} at ${url}:${line}`);
 };
 
+// --- HELPER to apply status ---
+function applyNodeStatus(targetId, newStatus) {
+    log(`[Update] Request for: ${targetId} -> ${newStatus}`);
+
+    // Try exact match
+    let targetObj = pulseObjects.find(obj => obj.nodeId === targetId);
+
+    // Try fuzzy
+    if (!targetObj) {
+        const lowerTarget = targetId.toLowerCase();
+        targetObj = pulseObjects.find(obj => obj.nodeId.toLowerCase() === lowerTarget);
+        if (targetObj) {
+            log(`[Update] Fuzzy match found: ${targetObj.nodeId}`);
+        }
+    }
+
+    if (targetObj) {
+        log(`[Update] Applied to node: ${targetObj.node.name}`);
+        targetObj.node.gitStatus = newStatus;
+        // Animation loop handles colors via GIT_STATUS_CONFIG
+    } else {
+        log(`[Update] Node NOT FOUND for id: ${targetId}`);
+    }
+}
+
 window.addEventListener('message', event => {
     const message = event.data;
-    log('Received message: ' + (message ? message.command : 'undefined'));
+
     if (message.command === 'setData') {
         try {
             if (message.data && message.data.nodes) {
@@ -481,10 +523,19 @@ window.addEventListener('message', event => {
                 Graph.graphData(message.data);
                 status.style.display = 'block';
                 status.innerText = `${message.data.nodes.length} nodes loaded`;
+
                 setTimeout(() => {
                     status.style.display = 'none';
-                    // Use a closer camera position instead of fitting everything (which can be too far)
                     Graph.cameraPosition({ z: 400 }, null, 1200);
+
+                    // --- PROCESS QUEUE ---
+                    if (pendingUpdates.size > 0) {
+                        log(`Processing ${pendingUpdates.size} queued git updates...`);
+                        pendingUpdates.forEach((st, id) => {
+                            applyNodeStatus(id, st);
+                        });
+                        pendingUpdates.clear();
+                    }
                 }, 1500);
                 log('Data applied successfully');
             } else {
@@ -512,29 +563,31 @@ window.addEventListener('message', event => {
                 }, 300);
             }
         }
+    } else if (message.command === 'updateNodeStatus') {
+        const targetId = message.id;
+        const newStatus = message.gitStatus;
+
+        if (pulseObjects.length === 0) {
+            log(`[Update] Graph not ready/empty. Queuing update for: ${targetId}`);
+            pendingUpdates.set(targetId, newStatus);
+        } else {
+            applyNodeStatus(targetId, newStatus);
+        }
+
     } else if (message.command === 'toggleLabels') {
         const showLabels = !window.showLabels;
         window.showLabels = showLabels;
-
-        // Toggle visibility of existing sprite labels
         pulseObjects.forEach(obj => {
             if (obj.labelSprite) {
                 obj.labelSprite.visible = showLabels;
             }
         });
-
         status.style.display = 'block';
         status.innerText = showLabels ? 'Labels: ON' : 'Labels: OFF';
-        status.style.opacity = '1';
-        setTimeout(() => {
-            status.style.opacity = '0';
-        }, 1500);
+        setTimeout(() => { status.style.display = 'none'; }, 2000);
     }
 });
 
-window.addEventListener('resize', () => {
-    if (Graph) Graph.width(window.innerWidth).height(window.innerHeight);
-});
-
-log('Sending ready signal');
+// Notify extension that we are ready to receive data
+log('Sending ready signal...');
 vscode.postMessage({ command: 'ready' });

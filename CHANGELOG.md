@@ -1,5 +1,22 @@
 # Change Log
 
+## [0.0.7] - 2025-12-21
+### Added
+- **Real-time Git Integration**: Git status updates are now reflected instantly without reloading the graph.
+- **Glassy Visual Design**: Nodes now feature a "Glass-like" white aura by default, adding depth to the visualization.
+- **Reset Settings Command**: Added a "Reset Settings" button in the view title menu to easily restore default configurations.
+- **New Default Colors**: modernized default color scheme (Directory: Blue, File: Gray).
+- **Untracked File Support**: Newly created files are now correctly detected and visualized in Green.
+
+### Changed
+- **Async Loading**: Decoupled Git scanning from the main graph loading process to prevent freezing on startup.
+- **Visual Mechanics**: Git status (Modified/New) now only affects the outer aura, preserving the node's base color (Inner Core) for better recognition.
+- **Settings Descriptions**: Rewrote settings descriptions (English & Japanese) for better clarity.
+
+### Fixed
+- Fixed an issue where new files (Untracked) were displayed with the wrong color.
+- Fixed performance issues during initial load.
+
 ## [0.0.6] - 2025-12-21
 ### Added
 - **High-Quality Node Visuals**: Nodes now feature a semi-transparent, cell-like glass effect (`MeshPhysicalMaterial`) for a premium look.

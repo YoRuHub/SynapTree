@@ -9,6 +9,7 @@ export interface GraphNode {
     type: 'directory' | 'file';
     level: number;
     color?: string;
+    gitStatus?: string; // 'modified' | 'staged' | 'untracked'
 }
 
 export interface GraphLink {
@@ -21,17 +22,19 @@ export interface GraphData {
     links: GraphLink[];
 }
 
-// Helper to get Git status map - REMOVED
-
 export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.OutputChannel): Promise<GraphData> {
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
+    // --- 1. Pure File System Scan (Git-agnostic) ---
+    // Git status will be synced asynchronously by the GitWatcher in extension.ts
+    // This ensures instant loading without waiting for Git extension activation or repository scanning.
+
     // Load configuration
     const config = vscode.workspace.getConfiguration('synaptree.colors');
-    const dirColor = config.get<string>('directory', '#ff00ff');
-    const rootColor = config.get<string>('root', '#ffffff');
-    const defaultFileColor = config.get<string>('defaultFile', '#00ffff');
+    const dirColor = config.get<string>('directory', '#0088ff'); // Blue
+    const rootColor = config.get<string>('root', '#ffffff'); // White
+    const defaultFileColor = config.get<string>('defaultFile', '#aaaaaa'); // Gray
 
     // Robust check: handle both legacy object format and new array format
     const extensionsConfig = config.get<any>('extensions', []);
@@ -95,7 +98,8 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
                 path: currentPath,
                 type: isDir ? 'directory' : 'file',
                 level: parentId ? 1 : 0,
-                color
+                color,
+                // gitStatus is purposely undefined here. It will be patched by main.js via events.
             });
 
             if (parentId) {

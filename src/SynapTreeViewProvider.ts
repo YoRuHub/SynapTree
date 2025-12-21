@@ -22,6 +22,11 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.html = getHtmlForWebview(webviewView.webview, this._extensionUri);
 
+        // Auto-refresh logic (Safety fallback)
+        setTimeout(() => {
+            this.refresh();
+        }, 500);
+
         webviewView.webview.onDidReceiveMessage(message => {
             try {
                 if (message.command === 'log') {
@@ -78,5 +83,13 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
             this._outputChannel.appendLine(`Refresh: Critical Error - ${err}`);
         }
     }
-
+    public notifyFileChange(uri: string, gitStatus: string | undefined) {
+        if (this._view) {
+            this._view.webview.postMessage({
+                command: 'updateNodeStatus',
+                id: uri,
+                gitStatus: gitStatus
+            });
+        }
+    }
 }

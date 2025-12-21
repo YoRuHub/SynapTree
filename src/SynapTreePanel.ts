@@ -69,6 +69,7 @@ export class SynapTreePanel {
             null,
             this._disposables
         );
+
     }
 
     public search(query: string) {
@@ -99,6 +100,15 @@ export class SynapTreePanel {
         }
     }
 
+    public notifyFileChange(uri: string, gitStatus: string | undefined) {
+        if (this._panel) {
+            this._panel.webview.postMessage({
+                command: 'updateNodeStatus',
+                id: uri,
+                gitStatus: gitStatus
+            });
+        }
+    }
 
     public dispose() {
         SynapTreePanel.currentPanel = undefined;

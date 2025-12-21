@@ -23,29 +23,65 @@
 - **Color Mapping**: Assign custom colors to specific file extensions via a simple table interface.
 - **Visual Tweaks**: Adjust particle speed, link opacity, and node colors to match your theme.
 - **Ignore Patterns**: Exclude `node_modules`, `.git`, or any other patterns to keep your view clean.
+# SynapTree 0.0.7
 
-## 🚀 Getting Started
+**Visualize your workspace like a neural network.**  
+SynapTree is a VS Code extension that turns your project's file structure into an interactive 3D Force-Directed Graph.
 
-1. Open any workspace in VS Code.
-2. Click the **SynapTree** icon in the Activity Bar.
-3. Click **"Visualize"** to generate the 3D graph.
-4. **Interact**:
-    - **Left Click**: Rotate camera.
-    - **Right Click**: Pan camera.
-    - **Scroll**: Zoom in/out.
-    - **Click Node**: Highlight connected subtrees.
+![Demo](resources/logo.jpg)
 
-## ⚙️ Configuration
+## Features
 
-Access settings via the **Gear Icon** in the SynapTree view title or standard VS Code settings (`SynapTree`).
+### 🌌 Interactive 3D Graph
+*   **Navigate**: Zoom, pan, and rotate around your codebase in 3D space.
+*   **Click to Open**: Clicking a node instantly opens the corresponding file in VS Code.
+*   **Search**: Press `Ctrl+F` (or `Cmd+F`) in the graph view to search for files by name.
 
-| Setting | Description | Default |
-| :--- | :--- | :--- |
-| `synaptree.colors.directory` | Color for directory nodes | `#ff00ff` |
-| `synaptree.colors.defaultFile` | Default color for files | `#00ffff` |
-| `synaptree.colors.extensions` | Map extensions (e.g., `.ts`) to colors | `{}` |
-| `synaptree.visuals.particleSpeed` | Speed of signal particles | `0.005` |
-| `synaptree.general.ignorePatterns` | Glob patterns to exclude | `["node_modules", ...]` |
+### 🧬 Git Integration (New in 0.0.7)
+Real-time visualization of your project's Git status.
+*   **Glassy Aura**: Normal files have a subtle, glass-like white aura.
+*   **Modified (Orange)**: The outer aura glows Orange when a file is modified.
+*   **Untracked (Green)**: The outer aura glows Green for new (untracked) files.
+*   **Staged (Bright Green)**: Staged files glow with a bright green aura.
+*   *Note: Using the "Reset Settings" command can restore these defaults if you have customized them.*
+
+### 🎨 Customizable Visuals
+*   **Directories**: Default is **Blue** (#0088ff).
+*   **Files**: Default is **Gray** (#aaaaaa).
+*   **Extension Colors**: Map specific file extensions (e.g., `.ts`, `.rs`, `.py`) to custom colors in Settings.
+*   **Reset**: A new "Trash icon" button in the menu allows you to reset all settings to defaults.
+
+## Usage
+
+1.  Open the **SynapTree** view in the Activity Bar (Circuit Board icon).
+2.  The graph will automatically load your current workspace.
+3.  **Left Click**: Rotate camera.
+4.  **Right Click**: Pan camera.
+5.  **Scroll**: Zoom in/out.
+6.  **Click Node**: Open file / Focus directory.
+7.  **Hover**: Highlight connections.
+
+## Extension Settings
+
+This extension contributes the following settings:
+
+*   `synaptree.colors.directory`: Color for directory nodes.
+*   `synaptree.colors.extensions`: Dictionary mapping extensions to colors.
+*   `synaptree.visuals.particleSpeed`: Speed of the data flow particles.
+*   `synaptree.visuals.normalOpacity`: Opacity of the connection links.
+*   `synaptree.general.ignorePatterns`: Glob patterns to exclude | `["node_modules", ...]` |
+*   ...and more!
+
+## Release Notes
+
+### 0.0.7
+*   **Performance**: Async Git loading for instant startup.
+*   **Visuals**: New "Glassy" node design & "Outer Aura" status indicators.
+*   **DX**: Added "Reset Settings" command and improved Japanese localization.
+
+---
+
+**Enjoy coding in 3D!**
 
 ## 📦 Installation
 
