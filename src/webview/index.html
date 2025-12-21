@@ -128,6 +128,17 @@
 </head>
 
 <body>
+    <script>
+        window.addEventListener('error', function (event) {
+            const status = document.getElementById('status');
+            if (status) {
+                status.style.display = 'block';
+                status.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
+                status.innerText = 'Error: ' + (event.message || event);
+                console.error('Global Error:', event.error || event.message);
+            }
+        });
+    </script>
     <div id="search-container">
         <input type="text" id="search-input" placeholder="Search structures..." autocomplete="off">
         <span id="search-results-count"></span>
@@ -137,7 +148,7 @@
     </div>
     <div id="status">Initializing 3D Environment...</div>
     <div id="graph"></div>
-    <script src="${scriptUri}"></script>
+    <script type="module" src="${scriptUri}"></script>
 </body>
 
 </html>

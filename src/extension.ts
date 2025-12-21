@@ -142,47 +142,41 @@ function setupGitWatcher(context: vscode.ExtensionContext, sidebarProvider: Syna
 
         // 2. Broadcast or Diff
         if (forceBroadcast) {
-            outputChannel.appendLine(`[GitWatcher] Forcing full broadcast of ${currentStatus.size} items...`);
+            const batchChanges = new Map<string, string | undefined>();
             currentStatus.forEach((newStatus, fsPath) => {
                 lastKnownStatus.set(fsPath, newStatus); // Sync cache
-                sidebarProvider.notifyFileChange(fsPath, newStatus);
-                if (SynapTreePanel.currentPanel) {
-                    SynapTreePanel.currentPanel.notifyFileChange(fsPath, newStatus);
-                }
+                batchChanges.set(fsPath, newStatus);
             });
-            outputChannel.appendLine(`[GitWatcher] Broadcast complete.`);
+            sidebarProvider.notifyFileChanges(batchChanges);
+            if (SynapTreePanel.currentPanel) {
+                SynapTreePanel.currentPanel.notifyFileChanges(batchChanges);
+            }
         } else {
             // Check for New or Changed statuses
+            const batchChanges = new Map<string, string | undefined>();
             currentStatus.forEach((newStatus, fsPath) => {
                 const oldStatus = lastKnownStatus.get(fsPath);
                 if (newStatus !== oldStatus) {
-                    // Status Changed!
-                    outputChannel.appendLine(`[GitWatcher] Update: ${fsPath} -> ${newStatus}`);
                     lastKnownStatus.set(fsPath, newStatus);
-
-                    // Notify
-                    sidebarProvider.notifyFileChange(fsPath, newStatus);
-                    if (SynapTreePanel.currentPanel) {
-                        SynapTreePanel.currentPanel.notifyFileChange(fsPath, newStatus);
-                    }
+                    batchChanges.set(fsPath, newStatus);
                 }
             });
 
             // Check for Resolved (Cleaned) files
-            // Files that were in lastKnownStatus but are NOT in currentStatus
             lastKnownStatus.forEach((_, fsPath) => {
                 if (!currentStatus.has(fsPath)) {
-                    // File is now clean
-                    outputChannel.appendLine(`[GitWatcher] Cleaned: ${fsPath}`);
                     lastKnownStatus.delete(fsPath);
-
-                    // Notify removal
-                    sidebarProvider.notifyFileChange(fsPath, undefined);
-                    if (SynapTreePanel.currentPanel) {
-                        SynapTreePanel.currentPanel.notifyFileChange(fsPath, undefined);
-                    }
+                    batchChanges.set(fsPath, undefined);
                 }
             });
+
+            // Notify Batch
+            if (batchChanges.size > 0) {
+                sidebarProvider.notifyFileChanges(batchChanges);
+                if (SynapTreePanel.currentPanel) {
+                    SynapTreePanel.currentPanel.notifyFileChanges(batchChanges);
+                }
+            }
         }
     };
 

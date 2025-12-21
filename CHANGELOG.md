@@ -2,20 +2,18 @@
 
 ## [0.0.7] - 2025-12-21
 ### Added
-- **Real-time Git Integration**: Git status updates are now reflected instantly without reloading the graph.
-- **Glassy Visual Design**: Nodes now feature a "Glass-like" white aura by default, adding depth to the visualization.
-- **Reset Settings Command**: Added a "Reset Settings" button in the view title menu to easily restore default configurations.
-- **New Default Colors**: modernized default color scheme (Directory: Blue, File: Gray).
-- **Untracked File Support**: Newly created files are now correctly detected and visualized in Green.
+- **Git Status Visualization**: Nodes now dynamically reflect Git status (Modified, Untracked, Staged) with distinct colored auras, updating in real-time.
+- **Interactive Context Menu**: Introduced a full-featured right-click context menu for nodes, enabling actions like "Set as Root", "New File/Folder", "Rename", and "Delete".
+- **Editor Sync**: Added an "Auto-Focus" setting (`synaptree.general.autoFocus`) to automatically highlight and center the node in the graph when you open a file in the editor.
 
 ### Changed
-- **Async Loading**: Decoupled Git scanning from the main graph loading process to prevent freezing on startup.
-- **Visual Mechanics**: Git status (Modified/New) now only affects the outer aura, preserving the node's base color (Inner Core) for better recognition.
-- **Settings Descriptions**: Rewrote settings descriptions (English & Japanese) for better clarity.
+- **Performance Optimization**: Significantly improved performance when switching branches or handling large Git changes by implementing batch processing, preventing UI freezes.
+- **Visuals**: The Root node is now rendered as a distinct sphere to make it easily recognizable.
+- **Cleanup**: Removed all debug logging for a cleaner experience.
 
 ### Fixed
-- Fixed an issue where new files (Untracked) were displayed with the wrong color.
-- Fixed performance issues during initial load.
+- Fixed localization logic for better compatibility.
+- Fixed performance bottlenecks in large repositories.
 
 ## [0.0.6] - 2025-12-21
 ### Added

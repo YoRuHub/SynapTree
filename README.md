@@ -1,87 +1,55 @@
-# SynapTree 🌳
-
-**SynapTree** transforms your code structure into a stunning, interactive 3D universe. Explore your file system as a living neural network, where each node is a crystalline entity and every dependency is a flowing signal.
-
-
-
-## ✨ Features
-
-### 🌌 Phantasmal 3D Visualization
-- **Cell-like Visuals**: Nodes are rendered as semi-transparent, glass-like entities created with `MeshPhysicalMaterial`.
-- **Organic Animations**: Nodes pulse with a rhythmic "heartbeat," making the graph feel alive.
-- **Ethereal Connections**: Dependencies utilize soft, phantom-like orbital lines with flowing signal particles.
-
-### 🔍 Interactive Experience
-- **Real-time Search**: Press the search icon or use `Cmd+F` to open the glassmorphism search bar. 
-- **Navigation**: Use `<` and `>` buttons to cycle through search results like a playlist.
-- **Ripple Highlights**: Matched nodes emit a stunning, expanding gold ripple.
-- **Permanent Labels**: File names are projected as 3D text sprites below each node for instant clarity.
-- **Dynamic Toggle**: Instantly show/hide labels with a dedicated toggle button ($eye / $eye-closed).
-
-### 🎨 Deep Customization
-- **Native Settings**: Fully integrated into VS Code's settings UI.
-- **Color Mapping**: Assign custom colors to specific file extensions via a simple table interface.
-- **Visual Tweaks**: Adjust particle speed, link opacity, and node colors to match your theme.
-- **Ignore Patterns**: Exclude `node_modules`, `.git`, or any other patterns to keep your view clean.
 # SynapTree 0.0.7
 
 **Visualize your workspace like a neural network.**  
-SynapTree is a VS Code extension that turns your project's file structure into an interactive 3D Force-Directed Graph.
+SynapTree transforms your project's file structure into a stunning, interactive 3D Force-Directed Graph.
 
-![Demo](resources/logo.jpg)
+![SynapTree Logo](resources/logo.jpg)
 
-## Features
+## ✨ Features
 
-### 🌌 Interactive 3D Graph
-*   **Navigate**: Zoom, pan, and rotate around your codebase in 3D space.
-*   **Click to Open**: Clicking a node instantly opens the corresponding file in VS Code.
-*   **Search**: Press `Ctrl+F` (or `Cmd+F`) in the graph view to search for files by name.
+### 🌌 Interactive 3D Visualization
+- **Cell-like Visuals**: Nodes feature a semi-transparent, glass-like aesthetic with an inner pulsating core.
+- **Context Menu**: **Right-click** any node to access a full menu:
+    - **Set as Root**: Focus the graph on a specific directory.
+    - **Create**: Add new files or folders directly from the 3D view.
+    - **Rename/Delete**: Manage your files without leaving the graph.
+- **Auto-Focus**: Opening a file in the editor automatically centers the camera on the corresponding node (Sync).
+- **Navigation**: Click nodes to open files. Use the HUD Reset button to return to the root.
 
-### 🧬 Git Integration (New in 0.0.7)
-Real-time visualization of your project's Git status.
-*   **Glassy Aura**: Normal files have a subtle, glass-like white aura.
-*   **Modified (Orange)**: The outer aura glows Orange when a file is modified.
-*   **Untracked (Green)**: The outer aura glows Green for new (untracked) files.
-*   **Staged (Bright Green)**: Staged files glow with a bright green aura.
-*   *Note: Using the "Reset Settings" command can restore these defaults if you have customized them.*
+### 🧬 Real-time Git Integration
+See your project's pulse at a glance. Nodes react to Git status with dynamic spectral auras:
+- **Modified**: glowing **Gold/Orange** aura.
+- **Untracked**: glowing **Green** aura.
+- **Staged**: glowing **Bright Green** aura.
+- **Ignored**: dimmed or excluded based on settings.
 
-### 🎨 Customizable Visuals
-*   **Directories**: Default is **Blue** (#0088ff).
-*   **Files**: Default is **Gray** (#aaaaaa).
-*   **Extension Colors**: Map specific file extensions (e.g., `.ts`, `.rs`, `.py`) to custom colors in Settings.
-*   **Reset**: A new "Trash icon" button in the menu allows you to reset all settings to defaults.
+*Updates are processed in efficient batches to ensure smooth performance even in large repositories.*
+
+### 🔍 Deep Search & Navigation
+- **Search**: Press `Ctrl+F` (or `Cmd+F`) inside the graph to toggle the search bar.
+- **Ripple Effect**: Matches emit a distinctive expanding ripple for easy location.
+- **Cycle**: Use `<` and `>` buttons to jump between multiple search results.
+
+### 🎨 Customization
+- **Colors**: Customize directory and file colors via VS Code Settings.
+- **Extension Maps**: Assign specific colors to file extensions (e.g., `.ts`, `.rs`).
+- **Particles**: Adjust the speed and density of signal particles flowing through links.
 
 ## Usage
 
-1.  Open the **SynapTree** view in the Activity Bar (Circuit Board icon).
-2.  The graph will automatically load your current workspace.
-3.  **Left Click**: Rotate camera.
-4.  **Right Click**: Pan camera.
-5.  **Scroll**: Zoom in/out.
-6.  **Click Node**: Open file / Focus directory.
-7.  **Hover**: Highlight connections.
+1.  Open the **SynapTree** view in the Activity Bar.
+2.  **Left Click**: Rotate Camera / Open File.
+3.  **Right Click**: Open Context Menu on Node / Pan Camera (on background).
+4.  **Scroll**: Zoom.
+5.  **Ctrl+F**: Search.
 
-## Extension Settings
+## Settings
 
-This extension contributes the following settings:
-
-*   `synaptree.colors.directory`: Color for directory nodes.
-*   `synaptree.colors.extensions`: Dictionary mapping extensions to colors.
-*   `synaptree.visuals.particleSpeed`: Speed of the data flow particles.
-*   `synaptree.visuals.normalOpacity`: Opacity of the connection links.
-*   `synaptree.general.ignorePatterns`: Glob patterns to exclude | `["node_modules", ...]` |
-*   ...and more!
-
-## Release Notes
-
-### 0.0.7
-*   **Performance**: Async Git loading for instant startup.
-*   **Visuals**: New "Glassy" node design & "Outer Aura" status indicators.
-*   **DX**: Added "Reset Settings" command and improved Japanese localization.
+- `synaptree.general.autoFocus`: Enable/Disable editor-to-graph synchronization.
+- `synaptree.colors.directory`: Color for directory nodes.
+- `synaptree.visuals.particleSpeed`: Flow speed of dependency links.
 
 ---
-
-**Enjoy coding in 3D!**
 
 ## 📦 Installation
 

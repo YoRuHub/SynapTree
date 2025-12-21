@@ -6,7 +6,7 @@ export interface GraphNode {
     id: string;
     name: string;
     path: string;
-    type: 'directory' | 'file';
+    type: 'directory' | 'file' | 'root';
     level: number;
     color?: string;
     gitStatus?: string; // 'modified' | 'staged' | 'untracked'
@@ -57,10 +57,6 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
     const generalConfig = vscode.workspace.getConfiguration('synaptree.general');
     const ignorePatterns = generalConfig.get<string[]>('ignorePatterns', []);
 
-    if (outputChannel) {
-        outputChannel.appendLine(`Scanning: ${rootPath}`);
-    }
-
     async function traverse(currentPath: string, parentId?: string): Promise<void> {
         try {
             const stats = await fs.promises.stat(currentPath);
@@ -96,7 +92,7 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
                 id,
                 name,
                 path: currentPath,
-                type: isDir ? 'directory' : 'file',
+                type: (!parentId && isDir) ? 'root' : (isDir ? 'directory' : 'file'),
                 level: parentId ? 1 : 0,
                 color,
                 // gitStatus is purposely undefined here. It will be patched by main.js via events.
@@ -120,10 +116,6 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
     }
 
     await traverse(rootPath);
-
-    if (outputChannel) {
-        outputChannel.appendLine(`Found ${nodes.length} nodes`);
-    }
 
     return { nodes, links };
 }

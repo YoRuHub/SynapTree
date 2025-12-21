@@ -79,11 +79,6 @@
                 "command": "synaptree.showLabels",
                 "title": "%synaptree.command.showLabels%",
                 "icon": "$(eye-closed)"
-            },
-            {
-                "command": "synaptree.resetSettings",
-                "title": "%synaptree.command.resetSettings%",
-                "icon": "$(discard)"
             }
         ],
         "menus": {
@@ -112,76 +107,16 @@
                     "command": "synaptree.openSettings",
                     "when": "view == synaptree-view",
                     "group": "navigation@3"
-                },
-                {
-                    "command": "synaptree.resetSettings",
-                    "when": "view == synaptree-view",
-                    "group": "navigation@4"
                 }
             ]
         },
         "configuration": {
             "title": "%synaptree.config.title%",
             "properties": {
-                "synaptree.colors.directory": {
-                    "type": "string",
-                    "format": "color-hex",
-                    "default": "#ff00ff",
-                    "description": "%synaptree.config.colors.directory%"
-                },
-                "synaptree.colors.root": {
-                    "type": "string",
-                    "format": "color-hex",
-                    "default": "#ffffff",
-                    "description": "Color for the root node"
-                },
-                "synaptree.colors.defaultFile": {
-                    "type": "string",
-                    "format": "color-hex",
-                    "default": "#00ffff",
-                    "description": "%synaptree.config.colors.defaultFile%"
-                },
-                "synaptree.colors.extensions": {
-                    "type": "object",
-                    "markdownDescription": "%synaptree.config.colors.extensions%",
-                    "additionalProperties": {
-                        "type": "string",
-                        "format": "color-hex"
-                    },
-                    "default": {
-                        ".swift": "#ffac45",
-                        ".ts": "#3178c6",
-                        ".js": "#f7df1e",
-                        ".html": "#e34f26",
-                        ".css": "#1572b6",
-                        ".json": "#f5cb5c",
-                        ".md": "#9b51e0",
-                        ".py": "#3776ab",
-                        ".go": "#00add8",
-                        ".rs": "#ce412b",
-                        ".kt": "#7f52ff"
-                    }
-                },
-                "synaptree.visuals.activeColor": {
-                    "type": "string",
-                    "format": "color-hex",
-                    "default": "#ffff00",
-                    "description": "%synaptree.config.visuals.activeColor%"
-                },
-                "synaptree.visuals.normalOpacity": {
-                    "type": "number",
-                    "default": 0.2,
-                    "description": "%synaptree.config.visuals.normalOpacity%"
-                },
-                "synaptree.visuals.particleSpeed": {
-                    "type": "number",
-                    "default": 0.005,
-                    "description": "%synaptree.config.visuals.particleSpeed%"
-                },
-                "synaptree.visuals.particleWidth": {
-                    "type": "number",
-                    "default": 3.0,
-                    "description": "%synaptree.config.visuals.particleWidth%"
+                "synaptree.general.autoFocus": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%synaptree.config.general.autoFocus%"
                 },
                 "synaptree.general.language": {
                     "type": "string",
@@ -209,6 +144,66 @@
                         ".DS_Store"
                     ],
                     "description": "%synaptree.config.general.ignorePatterns%"
+                },
+                "synaptree.visuals.particleSpeed": {
+                    "type": "number",
+                    "default": 0.005,
+                    "description": "%synaptree.config.visuals.particleSpeed%"
+                },
+                "synaptree.visuals.particleWidth": {
+                    "type": "number",
+                    "default": 3.0,
+                    "description": "%synaptree.config.visuals.particleWidth%"
+                },
+                "synaptree.visuals.normalOpacity": {
+                    "type": "number",
+                    "default": 0.2,
+                    "description": "%synaptree.config.visuals.normalOpacity%"
+                },
+                "synaptree.visuals.activeColor": {
+                    "type": "string",
+                    "format": "color-hex",
+                    "default": "#ffff00",
+                    "description": "%synaptree.config.visuals.activeColor%"
+                },
+                "synaptree.colors.root": {
+                    "type": "string",
+                    "format": "color-hex",
+                    "default": "#ffffff",
+                    "description": "Color for the root node"
+                },
+                "synaptree.colors.directory": {
+                    "type": "string",
+                    "format": "color-hex",
+                    "default": "#ff00ff",
+                    "description": "%synaptree.config.colors.directory%"
+                },
+                "synaptree.colors.defaultFile": {
+                    "type": "string",
+                    "format": "color-hex",
+                    "default": "#00ffff",
+                    "description": "%synaptree.config.colors.defaultFile%"
+                },
+                "synaptree.colors.extensions": {
+                    "type": "object",
+                    "markdownDescription": "%synaptree.config.colors.extensions%",
+                    "additionalProperties": {
+                        "type": "string",
+                        "format": "color-hex"
+                    },
+                    "default": {
+                        ".swift": "#ffac45",
+                        ".ts": "#3178c6",
+                        ".js": "#f7df1e",
+                        ".html": "#e34f26",
+                        ".css": "#1572b6",
+                        ".json": "#f5cb5c",
+                        ".md": "#9b51e0",
+                        ".py": "#3776ab",
+                        ".go": "#00add8",
+                        ".rs": "#ce412b",
+                        ".kt": "#7f52ff"
+                    }
                 }
             }
         }

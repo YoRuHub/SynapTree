@@ -37,8 +37,21 @@ export class SynapTreePanel {
         this._extensionUri = extensionUri;
         this._outputChannel = outputChannel;
 
-        this._outputChannel.appendLine('Panel created...');
-        this._panel.webview.html = getHtmlForWebview(this._panel.webview, this._extensionUri);
+
+
+
+        const translations = {
+            'Focus': vscode.l10n.t('Focus'),
+            'Set as Root': vscode.l10n.t('Set as Root'),
+            'Reset Root': vscode.l10n.t('Reset Root'),
+            'New Folder': vscode.l10n.t('New Folder'),
+            'New File': vscode.l10n.t('New File'),
+            'Rename': vscode.l10n.t('Rename'),
+            'Delete': vscode.l10n.t('Delete'),
+            'Search structures...': vscode.l10n.t('Search structures...')
+        };
+
+        this._panel.webview.html = getHtmlForWebview(this._panel.webview, this._extensionUri, translations);
 
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
@@ -46,11 +59,10 @@ export class SynapTreePanel {
             message => {
                 try {
                     if (message.command === 'log') {
-                        this._outputChannel.appendLine(`[Panel WebView Log] ${message.text}`);
                         return;
                     }
 
-                    this._outputChannel.appendLine(`Panel received: ${message.command}`);
+
                     switch (message.command) {
                         case 'ready':
                             this.refresh();
@@ -88,10 +100,8 @@ export class SynapTreePanel {
         try {
             const folders = vscode.workspace.workspaceFolders;
             if (folders && folders.length > 0) {
-                this._outputChannel.appendLine(`Panel Refresh: Fetching data for ${folders[0].uri.fsPath}`);
                 const data = await getWorkspaceData(folders[0].uri.fsPath, this._outputChannel);
                 this._panel.webview.postMessage({ command: 'setData', data });
-                this._outputChannel.appendLine(`Panel Refresh: Data sent (${data.nodes.length} nodes)`);
             } else {
                 this._outputChannel.appendLine('Panel Refresh: No workspace folders found');
             }
@@ -106,6 +116,18 @@ export class SynapTreePanel {
                 command: 'updateNodeStatus',
                 id: uri,
                 gitStatus: gitStatus
+            });
+        }
+    }
+
+    public notifyFileChanges(changes: Map<string, string | undefined>) {
+        if (this._panel && changes.size > 0) {
+            const changesObj: Record<string, string | undefined> = {};
+            changes.forEach((v, k) => { changesObj[k] = v; });
+
+            this._panel.webview.postMessage({
+                command: 'updateNodeStatusBatch',
+                changes: changesObj
             });
         }
     }
