@@ -1,4 +1,4 @@
-# SynapTree 0.0.9
+# SynapTree
 
 **Visualize your workspace like a neural network.**  
 SynapTree transforms your project's file structure into a stunning, interactive 3D Force-Directed Graph.
@@ -27,6 +27,12 @@ See your project's pulse at a glance. Nodes react to Git status with dynamic spe
 
 _Updates are processed in efficient batches to ensure smooth performance even in large repositories._
 
+### ⚡️ Live File System Sync
+
+The graph naturally evolves as you work.
+- **Incremental Updates**: Adding, removing, or renaming files instantly updates the graph structure without a full reload.
+- **Label Sync**: Toggle file labels on/off with perfect synchronization.
+
 ### 🔍 Deep Search & Navigation
 
 - **Search**: Press `Ctrl+F` (or `Cmd+F`) inside the graph to toggle the search bar.
@@ -51,12 +57,11 @@ _Updates are processed in efficient batches to ensure smooth performance even in
 | **Menu**   | **Right Click (Node)**      | Open the context menu for the node.               |
 | **Reset**  | **Left Click (Background)** | Clear current selection and highlighting.         |
 
-## 🚀 What's New in 0.0.9
+## 🚀 What's New in 0.1.2
 
-- **File Type Icons**: The filesystem comes alive with recognizable icons for every file type (`.ts`, `.js`, `.css`, etc.) and dedicated media icons.
-- **Enhanced Sidebar Integration**: New context menu options allow you to seamlessly "Set as Root" in the sidebar or "Open in Editor" directly from the graph.
-- **Performance Boost**: Engine upgraded with concurrency limiting to handle massive repositories without freezing.
-- **Stability**: Fixed initialization black-screen issues and stabilized camera behavior on load.
+- **Live FS Sync**: Implemented a true real-time file system watcher. The graph now updates incrementally (node-by-node) for file creation/deletion, eliminating full reloads.
+- **Bug Fix**: Fixed label visibility synchronization issues.
+- **Node Icons**: Files display their respective file type icons directly on the node.
 
 ## Settings
 

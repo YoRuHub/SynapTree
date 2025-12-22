@@ -1,12 +1,15 @@
 # Change Log
 
-## [0.1.1] - 2025-12-22
+## [0.1.2] - 2025-12-22
 
 ### Added
 - **Incremental Graph Updates**: The graph now updates instantly when files are created, deleted, or renamed, without requiring a full reload. This significantly improves performance.
 
 ### Fixed
 - **Label Sync**: Fixed an issue where the label visibility usage (Icon state) could get out of sync with the actual graph display.
+
+## [0.1.1] - 2025-12-22
+- Internal release (Skipped).
 
 ## [0.1.0] - 2025-12-22
 
