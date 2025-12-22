@@ -1,4 +1,4 @@
-# SynapTree 0.0.8
+# SynapTree 0.0.9
 
 **Visualize your workspace like a neural network.**  
 SynapTree transforms your project's file structure into a stunning, interactive 3D Force-Directed Graph.
@@ -7,9 +7,10 @@ SynapTree transforms your project's file structure into a stunning, interactive 
 
 ### 🌌 Interactive 3D Visualization
 
-- **Cell-like Visuals**: Nodes feature a semi-transparent, glass-like aesthetic with an inner pulsating core.
+- **Node Icons**: Files display vivid, identifiable icons (JS, TS, CSS, Images, etc.) directly on the node.
 - **Context Menu**: **Right-click** any node to access a full menu:
-  - **Set as Root**: Focus the graph on a specific directory.
+  - **Set as Root (Sidebar)**: Focus the graph on a specific directory.
+  - **Open in Editor**: Quickly open and focus the file.
   - **Create**: Add new files or folders directly from the 3D view.
   - **Rename/Delete**: Manage your files without leaving the graph.
 - **Auto-Focus**: Opening a file in the editor automatically centers the camera on the corresponding node (Sync).
@@ -50,12 +51,12 @@ _Updates are processed in efficient batches to ensure smooth performance even in
 | **Menu**   | **Right Click (Node)**      | Open the context menu for the node.               |
 | **Reset**  | **Left Click (Background)** | Clear current selection and highlighting.         |
 
-## 🚀 What's New in 0.0.8
+## 🚀 What's New in 0.0.9
 
-- **Interactive Breadcrumbs**: A sleek, bottom-aligned path bar shows the full path of the selected node. Click path segments to navigate up the hierarchy.
-- **Smart Initial Zoom**: The graph now automatically calculates the perfect zoom level to fit all nodes on screen when loaded.
-- **Improved Layout**: Fixed display issues where the graph would not fill the window correctly when resizing.
-- **Cleaner Default View**: Added smart ignore patterns to automatically hide clutter like `build`, `dist`, `coverage`, and dotfiles (`.*`) by default.
+- **File Type Icons**: The filesystem comes alive with recognizable icons for every file type (`.ts`, `.js`, `.css`, etc.) and dedicated media icons.
+- **Enhanced Sidebar Integration**: New context menu options allow you to seamlessly "Set as Root" in the sidebar or "Open in Editor" directly from the graph.
+- **Performance Boost**: Engine upgraded with concurrency limiting to handle massive repositories without freezing.
+- **Stability**: Fixed initialization black-screen issues and stabilized camera behavior on load.
 
 ## Settings
 
@@ -71,7 +72,11 @@ _Updates are processed in efficient batches to ensure smooth performance even in
 Install via the VS Code Marketplace:
 `ext install yoru.synaptree`
 
-## 📄 License
+## Credits
+
+This extension uses icons from [Material Icon Theme](https://github.com/PKief/vscode-material-icon-theme), licensed under the MIT License.
+
+## License
 
 MIT License. See [LICENSE](LICENSE) for details.
 

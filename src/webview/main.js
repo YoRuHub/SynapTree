@@ -77,6 +77,9 @@ try {
     .width(window.innerWidth)
     .height(window.innerHeight);
 
+  // Debug Config
+  // log(`Config check: ${JSON.stringify(window.synapTreeConfig)}`);
+
   // --- ANIMATION LOOP ---
   function animate() {
     State.pulseObjects.forEach((obj) => {
@@ -192,7 +195,7 @@ window.addEventListener("message", (event) => {
   if (message.command === "setData") {
     try {
       if (message.data && message.data.nodes) {
-        log(`Processing data: ${message.data.nodes.length} nodes`);
+        // log(`Processing data: ${message.data.nodes.length} nodes`);
         status.innerText = "Rendering Graph...";
 
         // Toggle Reset Button
@@ -217,7 +220,7 @@ window.addEventListener("message", (event) => {
             // Use zoomToFit to auto-calculate distance based on graph size
             // Add a small delay to allow force engine to spread nodes
             setTimeout(() => {
-                State.Graph.zoomToFit(1000, 100); 
+                // State.Graph.zoomToFit(1000, 100); // User requested no auto-zoom
             }, 500);
             State.isFirstLoad = false;
           }
@@ -242,22 +245,22 @@ window.addEventListener("message", (event) => {
               State.Graph.cameraPosition(newPos, targetNode, 1500);
               activateNode(targetNode);
               updateBreadcrumbs(targetNode);
-              log(`Smart Focused on: ${targetNode.name}`);
+              // log(`Smart Focused on: ${targetNode.name}`);
             }
           }
 
           // --- PROCESS QUEUE ---
           if (State.pendingUpdates.size > 0) {
-            log(
-              `Processing ${State.pendingUpdates.size} queued git updates...`
-            );
+            // log(
+            //   `Processing ${State.pendingUpdates.size} queued git updates...`
+            // );
             State.pendingUpdates.forEach((st, id) => {
               applyNodeStatus(id, st);
             });
             State.pendingUpdates.clear();
           }
         }, 1500);
-        log("Data applied successfully");
+        // log("Data applied successfully");
       } else {
         log("Received empty or invalid data");
         status.innerText = "Error: No nodes found in workspace";

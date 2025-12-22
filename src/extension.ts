@@ -60,6 +60,29 @@ export function activate(context: vscode.ExtensionContext) {
                 SynapTreePanel.currentPanel.toggleLabels();
             }
         }),
+        vscode.commands.registerCommand('synaptree.setRoot', (uri: vscode.Uri) => {
+            if (uri) {
+                // Update Sidebar
+                sidebarProvider.setRoot(uri);
+
+                // If Panel is open, update it too, but do NOT force open it
+                if (SynapTreePanel.currentPanel) {
+                    SynapTreePanel.currentPanel.setRoot(uri);
+                }
+            } else {
+                vscode.window.showErrorMessage('Please use this command from the Explorer context menu.');
+            }
+        }),
+        vscode.commands.registerCommand('synaptree.setRootInPanel', (uri: vscode.Uri) => {
+            if (uri) {
+                SynapTreePanel.createOrShow(context.extensionUri, outputChannel);
+                if (SynapTreePanel.currentPanel) {
+                    SynapTreePanel.currentPanel.setRoot(uri);
+                }
+            } else {
+                vscode.window.showErrorMessage('Please use this command from the Explorer context menu.');
+            }
+        }),
         vscode.commands.registerCommand('synaptree.resetSettings', async () => {
             const result = await vscode.window.showWarningMessage(
                 'Are you sure you want to reset all SynapTree settings to their defaults?',
@@ -89,6 +112,43 @@ export function activate(context: vscode.ExtensionContext) {
             }
         })
     );
+
+    // 4. Configuration Watcher
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('synaptree')) {
+            outputChannel.appendLine('Configuration changed, refreshing SynapTree...');
+            
+            // Refresh both views
+            sidebarProvider.refresh();
+            if (SynapTreePanel.currentPanel) {
+                SynapTreePanel.currentPanel.refresh();
+            }
+
+            // If autoFocus was just enabled, trigger focus immediately
+            if (e.affectsConfiguration('synaptree.general.autoFocus')) {
+                const config = vscode.workspace.getConfiguration('synaptree');
+                if (config.get('general.autoFocus') && vscode.window.activeTextEditor) {
+                    // Trigger focus after valid refresh
+                    setTimeout(() => {
+                        if (vscode.window.activeTextEditor) {
+                            const filePath = vscode.window.activeTextEditor.document.uri.fsPath;
+                            // We don't have a direct public 'focusNode' on sidebarProvider, but refresh handles it via onDidChangeActiveTextEditor if we trigger it? 
+                            // Actually onDidChangeActiveTextEditor only fires on change.
+                            
+                            // Let's manually trigger the message on the sidebar
+                            // Accessing private _view via public method or casting? 
+                            // Since we can't easily access _view, let's just rely on refresh() and maybe the user switching tabs. 
+                            // Or better, let's add a public focus method to SidebarProvider like we did for setRoot.
+                            // For now, let's stick to refresh. The refresh() sends setData which might not trigger focus unless we pass focusTargetId.
+                            
+                            // Let's pass the current file to refresh if autoFocus is on!
+                            sidebarProvider.refresh(filePath);
+                        }
+                    }, 500);
+                }
+            }
+        }
+    }));
 
     // Initialize context
     vscode.commands.executeCommand('setContext', 'synaptree:labelsVisible', true);

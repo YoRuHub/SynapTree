@@ -136,6 +136,7 @@ function createRippleSprite() {
 }
 
 export function createNodeObject(node) {
+    const group = new THREE.Group();
     const isDir = node.type === 'directory';
 
     // Base Color: Determined by file type or default
@@ -159,8 +160,6 @@ export function createNodeObject(node) {
         emissiveInt = 1.0;
     }
 
-    const group = new THREE.Group();
-
     // 1. Core
     const coreMat = getCachedMaterial(baseColor, 'core').clone();
     coreMat.emissive.set(baseColor);
@@ -171,6 +170,151 @@ export function createNodeObject(node) {
         coreMat
     );
     group.add(core);
+
+    // --- ICON LOGIC ---
+    if (!isDir && node.type === 'file' && window.synapTreeConfig && window.synapTreeConfig.iconsUri) {
+        const ext = node.name.split('.').pop().toLowerCase();
+        
+        const iconMap = {
+            'ts': 'typescript.svg',
+            'tsx': 'react.svg',
+            'js': 'javascript.svg',
+            'jsx': 'react.svg',
+            'json': 'json.svg',
+            'html': 'html.svg',
+            'css': 'css.svg',
+            'md': 'markdown.svg',
+            'py': 'python.svg',
+            'c': 'c.svg',
+            'cpp': 'cpp.svg',
+            'h': 'cpp.svg',
+            'cs': 'csharp.svg',
+            'go': 'go.svg',
+            'rs': 'rust.svg',
+            'java': 'java.svg',
+            'php': 'php.svg',
+            'rb': 'ruby.svg',
+            'vue': 'vue.svg',
+            'dockerfile': 'docker.svg',
+            'dockerignore': 'docker.svg',
+            'yaml': 'yaml.svg',
+            'yml': 'yaml.svg',
+            'xml': 'xml.svg',
+            'sql': 'sql.svg',
+            'sh': 'shell.svg',
+            'bash': 'shell.svg',
+            'zsh': 'shell.svg',
+            'gitignore': 'git.svg',
+            'gitattributes': 'git.svg',
+            'dart': 'dart.svg',
+            // Media
+            'png': 'image.svg', 
+            'jpg': 'image.svg', 
+            'jpeg': 'image.svg', 
+            'gif': 'image.svg', 
+            'bmp': 'image.svg', 
+            'ico': 'image.svg', 
+            'webp': 'image.svg', 
+            'svg': 'image.svg', 
+            'mp3': 'audio.svg', 
+            'wav': 'audio.svg', 
+            'ogg': 'audio.svg', 
+            'm4a': 'audio.svg', 
+            'mp4': 'video.svg', 
+            'mov': 'video.svg', 
+            'avi': 'video.svg', 
+            'webm': 'video.svg', 
+            'mkv': 'video.svg'
+        };
+        
+        const lowerName = node.name.toLowerCase();
+        
+        let iconFile = iconMap[ext];
+
+        // Specific Filename Overrides
+        const fileMap = {
+            'package.json': 'nodejs.svg',
+            'package-lock.json': 'nodejs.svg',
+            'tsconfig.json': 'typescript.svg',
+            'jsconfig.json': 'javascript.svg',
+            '.env': 'tune.svg',
+            '.env.local': 'tune.svg',
+            '.env.development': 'tune.svg',
+            '.env.production': 'tune.svg',
+            'dockerfile': 'docker.svg',
+            'docker-compose.yml': 'docker.svg',
+            'docker-compose.yaml': 'docker.svg',
+            '.gitignore': 'git.svg',
+            '.gitattributes': 'git.svg',
+            '.npmrc': 'npm.svg',
+            'yarn.lock': 'npm.svg',
+            'readme.md': 'markdown.svg',
+            'license': 'file.svg'
+        };
+
+        if (fileMap[lowerName]) {
+            iconFile = fileMap[lowerName];
+        }
+
+        if (iconFile) {
+            const iconUrl = `${window.synapTreeConfig.iconsUri}/${iconFile}`;
+            
+            const getIconMaterial = (url) => {
+                const key = `icon-${url}`;
+                if (!materialCache.has(key)) {
+                    const loader = new THREE.TextureLoader();
+                    const tex = loader.load(url);
+                    // Use white color to preserve original SVG colors
+                    const mat = new THREE.SpriteMaterial({ 
+                        map: tex, 
+                        color: 0xffffff, 
+                        transparent: true, 
+                        depthWrite: false, 
+                        depthTest: true // Check depth to respect walls (prevents X-ray)
+                    });
+                    materialCache.set(key, mat);
+                }
+                return materialCache.get(key);
+            };
+
+            // --- Icon Background (Gray Sphere) ---
+            // Wraps the icon to provide contrast against the node core color
+            const getIconBgMaterial = () => {
+                const bgKey = 'icon-bg-grey';
+                if (!materialCache.has(bgKey)) {
+                    const mat = new THREE.MeshBasicMaterial({
+                        color: 0x888888,
+                        transparent: true,
+                        opacity: 0.5,
+                        depthWrite: false
+                    });
+                    materialCache.set(bgKey, mat);
+                }
+                return materialCache.get(bgKey);
+            };
+
+            // Create background sphere (slightly smaller than core, larger than icon)
+            // Reusing coreFile geometry (Radius 6) but scaling it down
+            const iconBg = new THREE.Mesh(geometryCache.coreFile, getIconBgMaterial());
+            iconBg.scale.set(0.7, 0.7, 0.7); // Effective Radius ~4.2
+            group.add(iconBg);
+
+            const iconMat = getIconMaterial(iconUrl);
+            const iconSprite = new THREE.Sprite(iconMat);
+            // Scale 4 fits well within the radius 6 core (and radius 4.2 bg)
+            iconSprite.scale.set(4, 4, 1);
+            
+            // Remove forced renderOrder to allow interleaving with Cores based on distance
+            iconSprite.renderOrder = 0; 
+            
+            group.add(iconSprite);
+
+            // Adjust Core Opacity for visibility (Solid enough to hide bg, but no depthWrite to allow inner icon sorting)
+            coreMat.opacity = 0.9; 
+            coreMat.transmission = 0.05; 
+            coreMat.depthWrite = false;
+        } 
+    }
 
     // 2. Inner Glow
     const glowMat = getCachedMaterial(innerColor, 'inner').clone();

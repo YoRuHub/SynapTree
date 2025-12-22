@@ -8,6 +8,7 @@ export class SynapTreePanel {
     private readonly _extensionUri: vscode.Uri;
     private readonly _outputChannel: vscode.OutputChannel;
     private _disposables: vscode.Disposable[] = [];
+    private _currentRoot: string | undefined;
 
     public static createOrShow(extensionUri: vscode.Uri, outputChannel: vscode.OutputChannel) {
         const column = vscode.window.activeTextEditor
@@ -25,7 +26,10 @@ export class SynapTreePanel {
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
-                localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'src', 'webview')]
+                localResourceRoots: [
+                    vscode.Uri.joinPath(extensionUri, 'src', 'webview'),
+                    vscode.Uri.joinPath(extensionUri, 'resources')
+                ]
             }
         );
 
@@ -59,6 +63,7 @@ export class SynapTreePanel {
             message => {
                 try {
                     if (message.command === 'log') {
+                        this._outputChannel.appendLine(`[Webview] ${message.text}`);
                         return;
                     }
 
@@ -72,6 +77,13 @@ export class SynapTreePanel {
                                 vscode.window.showTextDocument(vscode.Uri.file(message.path));
                             }
                             break;
+                        case 'nodeAction':
+                            if (message.action === 'resetRoot') {
+                                this._currentRoot = undefined;
+                                this.refresh();
+                            } else if (message.action === 'setRoot' && message.path) {
+                                this.setRoot(vscode.Uri.file(message.path));
+                            }
                             break;
                     }
                 } catch (err) {
@@ -98,16 +110,32 @@ export class SynapTreePanel {
 
     public async refresh() {
         try {
-            const folders = vscode.workspace.workspaceFolders;
-            if (folders && folders.length > 0) {
-                const data = await getWorkspaceData(folders[0].uri.fsPath, this._outputChannel);
-                this._panel.webview.postMessage({ command: 'setData', data });
+            let rootPath = this._currentRoot;
+            if (!rootPath) {
+                const folders = vscode.workspace.workspaceFolders;
+                if (folders && folders.length > 0) {
+                    rootPath = folders[0].uri.fsPath;
+                }
+            }
+
+            if (rootPath) {
+                const data = await getWorkspaceData(rootPath, this._outputChannel);
+                this._panel.webview.postMessage({
+                    command: 'setData',
+                    data,
+                    isCustomRoot: !!this._currentRoot
+                });
             } else {
                 this._outputChannel.appendLine('Panel Refresh: No workspace folders found');
             }
         } catch (err) {
             this._outputChannel.appendLine(`Panel Refresh Error: ${err}`);
         }
+    }
+
+    public setRoot(uri: vscode.Uri) {
+        this._currentRoot = uri.fsPath;
+        this.refresh();
     }
 
     public notifyFileChange(uri: string, gitStatus: string | undefined) {

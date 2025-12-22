@@ -17,7 +17,10 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'src', 'webview')]
+            localResourceRoots: [
+                vscode.Uri.joinPath(this._extensionUri, 'src', 'webview'),
+                vscode.Uri.joinPath(this._extensionUri, 'resources')
+            ]
         };
 
 
@@ -53,6 +56,7 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(message => {
             try {
                 if (message.command === 'log') {
+                    this._outputChannel.appendLine(`[Sidebar] ${message.text}`);
                     return;
                 }
 
@@ -73,6 +77,14 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
                 this._outputChannel.appendLine(`Error in Sidebar message handler: ${err}`);
             }
         });
+    }
+
+    public setRoot(uri: vscode.Uri) {
+        this._currentRootPath = uri.fsPath;
+        this.refresh();
+        if (this._view) {
+            this._view.show(true);
+        }
     }
 
     public search(query: string) {

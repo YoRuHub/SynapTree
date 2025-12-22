@@ -2,7 +2,7 @@
     "name": "synaptree",
     "displayName": "SynapTree",
     "description": "Visualize your workspace in a 3D interactive graph.",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "icon": "resources/logo.jpg",
     "publisher": "YoRuHub",
     "license": "MIT",
@@ -79,9 +79,31 @@
                 "command": "synaptree.showLabels",
                 "title": "%synaptree.command.showLabels%",
                 "icon": "$(eye-closed)"
+            },
+            {
+                "command": "synaptree.setRoot",
+                "title": "%synaptree.command.setRoot%",
+                "icon": "$(root-folder)"
+            },
+            {
+                "command": "synaptree.setRootInPanel",
+                "title": "%synaptree.command.setRootInPanel%",
+                "icon": "$(open-preview)"
             }
         ],
         "menus": {
+            "explorer/context": [
+                {
+                    "command": "synaptree.setRoot",
+                    "when": "explorerResourceIsFolder",
+                    "group": "synaptree@1"
+                },
+                {
+                    "command": "synaptree.setRootInPanel",
+                    "when": "explorerResourceIsFolder",
+                    "group": "synaptree@2"
+                }
+            ],
             "view/title": [
                 {
                     "command": "synaptree.search",
@@ -203,7 +225,9 @@
                     "default": {
                         ".swift": "#ffac45",
                         ".ts": "#3178c6",
+                        ".tsx": "#61dafb",
                         ".js": "#f7df1e",
+                        ".jsx": "#61dafb",
                         ".html": "#e34f26",
                         ".css": "#1572b6",
                         ".json": "#f5cb5c",
@@ -211,7 +235,37 @@
                         ".py": "#3776ab",
                         ".go": "#00add8",
                         ".rs": "#ce412b",
-                        ".kt": "#7f52ff"
+                        ".kt": "#7f52ff",
+                        ".dart": "#00b4ab",
+                        ".java": "#b07219",
+                        ".c": "#555555",
+                        ".cpp": "#f34b7d",
+                        ".h": "#f34b7d",
+                        ".cs": "#178600",
+                        ".php": "#4f5d95",
+                        ".rb": "#701516",
+                        ".vue": "#42b883",
+                        ".sql": "#e38c00",
+                        ".xml": "#0060ac",
+                        ".yaml": "#cb171e",
+                        ".yml": "#cb171e",
+                        ".sh": "#89e051",
+                        ".png": "#a074c4",
+                        ".jpg": "#a074c4",
+                        ".jpeg": "#a074c4",
+                        ".gif": "#a074c4",
+                        ".svg": "#a074c4",
+                        ".webp": "#a074c4",
+                        ".ico": "#a074c4",
+                        ".mp4": "#ff6d7e",
+                        ".mov": "#ff6d7e",
+                        ".avi": "#ff6d7e",
+                        ".webm": "#ff6d7e",
+                        ".mkv": "#ff6d7e",
+                        ".mp3": "#fb9847",
+                        ".wav": "#fb9847",
+                        ".ogg": "#fb9847",
+                        ".m4a": "#fb9847"
                     }
                 }
             }

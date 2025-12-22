@@ -17,5 +17,7 @@
     "synaptree.command.search": "SynapTree: ノードを検索...",
     "synaptree.command.showLabels": "ラベルを表示",
     "synaptree.command.hideLabels": "ラベルを非表示",
-    "synaptree.command.resetSettings": "SynapTree: 設定をリセット"
+    "synaptree.command.resetSettings": "SynapTree: 設定をリセット",
+    "synaptree.command.setRoot": "SynapTree: サイドバーで表示",
+    "synaptree.command.setRootInPanel": "SynapTree: エディタで表示"
 }

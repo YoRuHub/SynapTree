@@ -57,9 +57,50 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
     const generalConfig = vscode.workspace.getConfiguration('synaptree.general');
     const ignorePatterns = generalConfig.get<string[]>('ignorePatterns', []);
 
+    // Concurrency Limiter
+    const MAX_CONCURRENT = 50;
+    let activeScans = 0;
+    const queue: (() => Promise<void>)[] = [];
+
+    function runWithLimit<T>(fn: () => Promise<T>): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            const task = async () => {
+                try {
+                    const res = await fn();
+                    resolve(res);
+                } catch (e) {
+                    reject(e);
+                } finally {
+                    activeScans--;
+                    if (queue.length > 0) {
+                        const next = queue.shift();
+                        if (next) {
+                            activeScans++; // Re-occupy slot immediately for the next task
+                            next();
+                        }
+                    }
+                }
+            };
+
+            if (activeScans < MAX_CONCURRENT) {
+                activeScans++;
+                task();
+            } else {
+                queue.push(task);
+            }
+        });
+    }
+
+    // Helper to limit concurrency ONLY for FS operations
+    function limit<T>(fn: () => Promise<T>): Promise<T> {
+        return runWithLimit(fn) as Promise<T>;
+    }
+
     async function traverse(currentPath: string, parentId?: string): Promise<void> {
         try {
-            const stats = await fs.promises.stat(currentPath);
+            // Limit FS operation
+            const stats = await limit(() => fs.promises.stat(currentPath));
+            
             const isDir = stats.isDirectory();
             const name = path.basename(currentPath);
             const id = currentPath;
@@ -103,8 +144,11 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
             }
 
             if (isDir) {
-                const children = await fs.promises.readdir(currentPath);
-                // Parallelize children processing
+                // Limit FS operation
+                const children = await limit(() => fs.promises.readdir(currentPath));
+                
+                // Parallelize children processing WITHOUT wrapping the wait in the limiter
+                // This prevents deadlock where parents hold slots waiting for children
                 await Promise.all(children.map(child => traverse(path.join(currentPath, child), id)));
             }
         } catch (err) {

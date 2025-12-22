@@ -1,5 +1,19 @@
 # Change Log
 
+## [0.0.9] - 2025-12-22
+
+### Added
+
+- **Node Icons**: File nodes now display their respective file type icons (e.g., TS, JS, CSS, Media) directly on the node, dramatically improving visual recognition.
+- **Enhanced Context Menu**: Added "Set as Root" (Open in Sidebar) and "Open in Editor" (Focus) options to the folder context menu for more flexible navigation workflow.
+- **Media Support**: Added specific icons and colors for image, video, and audio files.
+
+### Fixed
+
+- **Performance Stability**: Implemented a concurrency limiter for file scanning to prevent crashes ("EMFILE" errors) in large repositories.
+- **Initialization Deadlock**: Resolved a critical bug where the graph would fail to load (black screen) due to a deadlock in the scanning logic.
+- **Visual Polish**: Disabled the automatic "zoom out" animation on load for a stable initial view.
+
 ## [0.0.8] - 2025-12-21
 
 ### Added
