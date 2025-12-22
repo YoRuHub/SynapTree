@@ -93,9 +93,9 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    public toggleLabels() {
+    public setLabels(visible: boolean) {
         if (this._view) {
-            this._view.webview.postMessage({ command: 'toggleLabels' });
+            this._view.webview.postMessage({ command: 'setLabels', visible });
         }
     }
 
@@ -143,6 +143,18 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
                 command: 'updateNodeStatusBatch',
                 changes: changesObj
             });
+        }
+    }
+
+    public notifyNodeAdded(node: any, parentId?: string) {
+        if (this._view) {
+            this._view.webview.postMessage({ command: 'addNode', node, parentId });
+        }
+    }
+
+    public notifyNodeDeleted(id: string) {
+        if (this._view) {
+            this._view.webview.postMessage({ command: 'removeNode', id });
         }
     }
 

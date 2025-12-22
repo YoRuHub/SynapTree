@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { SynapTreeViewProvider } from './SynapTreeViewProvider';
 import { SynapTreePanel } from './SynapTreePanel';
+import { createSingleNode } from './dataRegistry';
 
 export function activate(context: vscode.ExtensionContext) {
     const outputChannel = vscode.window.createOutputChannel('SynapTree');
@@ -45,19 +47,19 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('synaptree.hideLabels', () => {
             // Set context to false (switch to "Show" icon)
             vscode.commands.executeCommand('setContext', 'synaptree:labelsVisible', false);
-            // Toggle webview state
-            sidebarProvider.toggleLabels();
+            // setLabels(false)
+            sidebarProvider.setLabels(false);
             if (SynapTreePanel.currentPanel) {
-                SynapTreePanel.currentPanel.toggleLabels();
+                SynapTreePanel.currentPanel.setLabels(false);
             }
         }),
         vscode.commands.registerCommand('synaptree.showLabels', () => {
             // Set context to true (switch to "Hide" icon)
             vscode.commands.executeCommand('setContext', 'synaptree:labelsVisible', true);
-            // Toggle webview state
-            sidebarProvider.toggleLabels();
+            // setLabels(true)
+            sidebarProvider.setLabels(true);
             if (SynapTreePanel.currentPanel) {
-                SynapTreePanel.currentPanel.toggleLabels();
+                SynapTreePanel.currentPanel.setLabels(true);
             }
         }),
         vscode.commands.registerCommand('synaptree.setRoot', (uri: vscode.Uri) => {
@@ -117,7 +119,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('synaptree')) {
             outputChannel.appendLine('Configuration changed, refreshing SynapTree...');
-            
+
             // Refresh both views
             sidebarProvider.refresh();
             if (SynapTreePanel.currentPanel) {
@@ -134,13 +136,13 @@ export function activate(context: vscode.ExtensionContext) {
                             const filePath = vscode.window.activeTextEditor.document.uri.fsPath;
                             // We don't have a direct public 'focusNode' on sidebarProvider, but refresh handles it via onDidChangeActiveTextEditor if we trigger it? 
                             // Actually onDidChangeActiveTextEditor only fires on change.
-                            
+
                             // Let's manually trigger the message on the sidebar
                             // Accessing private _view via public method or casting? 
                             // Since we can't easily access _view, let's just rely on refresh() and maybe the user switching tabs. 
                             // Or better, let's add a public focus method to SidebarProvider like we did for setRoot.
                             // For now, let's stick to refresh. The refresh() sends setData which might not trigger focus unless we pass focusTargetId.
-                            
+
                             // Let's pass the current file to refresh if autoFocus is on!
                             sidebarProvider.refresh(filePath);
                         }
@@ -158,6 +160,77 @@ export function activate(context: vscode.ExtensionContext) {
     if (gitRefresh) {
         triggerGitBroadcast = gitRefresh;
     }
+
+    // 5. File System Watcher (Auto-Refresh on Create/Delete)
+    setupFileSystemWatcher(context, sidebarProvider, outputChannel);
+}
+
+// --- File System Watcher ---
+function setupFileSystemWatcher(context: vscode.ExtensionContext, sidebarProvider: SynapTreeViewProvider, outputChannel: vscode.OutputChannel) {
+    const watcher = vscode.workspace.createFileSystemWatcher('**/*');
+
+    // Check ignore helper
+    const isIgnored = (pathStr: string) => {
+        return pathStr.includes('/.git/') || pathStr.includes('/.gemini/') || pathStr.includes('node_modules');
+    };
+
+    const handleCreate = async (uri: vscode.Uri) => {
+        if (isIgnored(uri.path)) return;
+
+        outputChannel.appendLine(`[FS] Create: ${uri.fsPath}`);
+        // Create single node
+        const parentPath = path.dirname(uri.fsPath);
+        const node = await createSingleNode(uri.fsPath, parentPath);
+
+        if (node) {
+            sidebarProvider.notifyNodeAdded(node, parentPath);
+            if (SynapTreePanel.currentPanel) {
+                SynapTreePanel.currentPanel.notifyNodeAdded(node, parentPath);
+            }
+        }
+    };
+
+    const handleDelete = (uri: vscode.Uri) => {
+        if (isIgnored(uri.path)) return;
+
+        outputChannel.appendLine(`[FS] Delete: ${uri.fsPath}`);
+
+        sidebarProvider.notifyNodeDeleted(uri.fsPath);
+        if (SynapTreePanel.currentPanel) {
+            SynapTreePanel.currentPanel.notifyNodeDeleted(uri.fsPath);
+        }
+    };
+
+    const handleRename = async (e: vscode.FileRenameEvent) => {
+        for (const file of e.files) {
+            if (isIgnored(file.oldUri.path) && isIgnored(file.newUri.path)) continue;
+
+            outputChannel.appendLine(`[FS] Rename: ${file.oldUri.fsPath} -> ${file.newUri.fsPath}`);
+
+            // Delete Old
+            sidebarProvider.notifyNodeDeleted(file.oldUri.fsPath);
+            if (SynapTreePanel.currentPanel) {
+                SynapTreePanel.currentPanel.notifyNodeDeleted(file.oldUri.fsPath);
+            }
+
+            // Add New
+            const parentPath = path.dirname(file.newUri.fsPath);
+            const node = await createSingleNode(file.newUri.fsPath, parentPath);
+            if (node) {
+                sidebarProvider.notifyNodeAdded(node, parentPath);
+                if (SynapTreePanel.currentPanel) {
+                    SynapTreePanel.currentPanel.notifyNodeAdded(node, parentPath);
+                }
+            }
+        }
+    };
+
+    context.subscriptions.push(
+        watcher.onDidCreate(handleCreate),
+        watcher.onDidDelete(handleDelete),
+        vscode.workspace.onDidRenameFiles(handleRename),
+        watcher // Dispose watcher
+    );
 }
 
 // --- New Architecture: Git State Watcher ---

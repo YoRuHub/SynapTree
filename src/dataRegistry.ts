@@ -22,38 +22,95 @@ export interface GraphData {
     links: GraphLink[];
 }
 
+export async function createSingleNode(currentPath: string, parentId?: string): Promise<GraphNode | null> {
+    try {
+        const stats = await fs.promises.stat(currentPath);
+        const isDir = stats.isDirectory();
+        const name = path.basename(currentPath);
+        const id = currentPath;
+
+        // Load configuration (Duplicate load for now to ensure fresh config on single update)
+        // In real app, might want to cache this or pass it in.
+        const config = vscode.workspace.getConfiguration('synaptree.colors');
+        const dirColor = config.get<string>('directory', '#0088ff');
+        const rootColor = config.get<string>('root', '#ffffff');
+        const defaultFileColor = config.get<string>('defaultFile', '#aaaaaa');
+        const extensionsConfig = config.get<any>('extensions', []);
+
+        const generalConfig = vscode.workspace.getConfiguration('synaptree.general');
+        const ignorePatterns = generalConfig.get<string[]>('ignorePatterns', []);
+
+        // Ignore Check
+        const shouldIgnore = ignorePatterns.some(pattern => {
+            if (pattern.includes('*')) {
+                const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$', 'i');
+                return regex.test(name);
+            }
+            return name === pattern;
+        });
+
+        if (shouldIgnore) return null;
+
+        // Color Logic
+        let color = defaultFileColor;
+        if (isDir) {
+            color = (!parentId) ? rootColor : dirColor;
+        } else {
+            const ext = path.extname(name).toLowerCase();
+            const extensionMap: Record<string, string> = {};
+
+            if (Array.isArray(extensionsConfig)) {
+                extensionsConfig.forEach(item => {
+                    if (item && item.extension && item.color) {
+                        extensionMap[item.extension.toLowerCase()] = item.color;
+                    }
+                });
+            } else if (typeof extensionsConfig === 'object' && extensionsConfig !== null) {
+                for (const [ext, color] of Object.entries(extensionsConfig)) {
+                    extensionMap[ext.toLowerCase()] = color as string;
+                }
+            }
+
+            if (extensionMap[ext]) {
+                color = extensionMap[ext];
+            }
+        }
+
+        return {
+            id,
+            name,
+            path: currentPath,
+            type: (!parentId && isDir) ? 'root' : (isDir ? 'directory' : 'file'),
+            level: parentId ? 1 : 0,
+            color
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
 export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.OutputChannel): Promise<GraphData> {
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
-    // --- 1. Pure File System Scan (Git-agnostic) ---
-    // Git status will be synced asynchronously by the GitWatcher in extension.ts
-    // This ensures instant loading without waiting for Git extension activation or repository scanning.
+    // Load configuration to pass down? 
+    // For now, let's keep traverse logic mostly as is but maybe reuse createSingleNode?
+    // Actually, reusing createSingleNode inside the loop is less efficient due to config reading every time.
+    // Let's Keep getWorkspaceData optimized as is, but duplicate the logic in createSingleNode for single updates.
+    // This is a trade-off: duplication vs performance. Here performance of full scan is critical. Single update performance is less critical but config read is fast.
 
-    // Load configuration
+    // ... (Keeping original setup for bulk scan performance) ...
     const config = vscode.workspace.getConfiguration('synaptree.colors');
     const dirColor = config.get<string>('directory', '#0088ff'); // Blue
     const rootColor = config.get<string>('root', '#ffffff'); // White
     const defaultFileColor = config.get<string>('defaultFile', '#aaaaaa'); // Gray
-
-    // Robust check: handle both legacy object format and new array format
     const extensionsConfig = config.get<any>('extensions', []);
     const extensionMap: Record<string, string> = {};
-
     if (Array.isArray(extensionsConfig)) {
-        extensionsConfig.forEach(item => {
-            if (item && item.extension && item.color) {
-                extensionMap[item.extension.toLowerCase()] = item.color;
-            }
-        });
+        extensionsConfig.forEach(item => { extensionMap[item.extension.toLowerCase()] = item.color; });
     } else if (typeof extensionsConfig === 'object' && extensionsConfig !== null) {
-        // Legacy support
-        for (const [ext, color] of Object.entries(extensionsConfig)) {
-            extensionMap[ext.toLowerCase()] = color as string;
-        }
+        for (const [ext, color] of Object.entries(extensionsConfig)) { extensionMap[ext.toLowerCase()] = color as string; }
     }
-
-    // Load ignore patterns
     const generalConfig = vscode.workspace.getConfiguration('synaptree.general');
     const ignorePatterns = generalConfig.get<string[]>('ignorePatterns', []);
 
@@ -90,22 +147,15 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
             }
         });
     }
-
-    // Helper to limit concurrency ONLY for FS operations
-    function limit<T>(fn: () => Promise<T>): Promise<T> {
-        return runWithLimit(fn) as Promise<T>;
-    }
+    function limit<T>(fn: () => Promise<T>): Promise<T> { return runWithLimit(fn) as Promise<T>; }
 
     async function traverse(currentPath: string, parentId?: string): Promise<void> {
         try {
-            // Limit FS operation
             const stats = await limit(() => fs.promises.stat(currentPath));
-            
             const isDir = stats.isDirectory();
             const name = path.basename(currentPath);
             const id = currentPath;
 
-            // Check ignore patterns
             const shouldIgnore = ignorePatterns.some(pattern => {
                 if (pattern.includes('*')) {
                     const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$', 'i');
@@ -114,19 +164,14 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
                 return name === pattern;
             });
 
-            if (shouldIgnore) {
-                return;
-            }
+            if (shouldIgnore) return;
 
-            // Determine color
             let color = defaultFileColor;
             if (isDir) {
                 color = (!parentId) ? rootColor : dirColor;
             } else {
                 const ext = path.extname(name).toLowerCase();
-                if (extensionMap[ext]) {
-                    color = extensionMap[ext];
-                }
+                if (extensionMap[ext]) color = extensionMap[ext];
             }
 
             nodes.push({
@@ -136,7 +181,6 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
                 type: (!parentId && isDir) ? 'root' : (isDir ? 'directory' : 'file'),
                 level: parentId ? 1 : 0,
                 color,
-                // gitStatus is purposely undefined here. It will be patched by main.js via events.
             });
 
             if (parentId) {
@@ -144,22 +188,14 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
             }
 
             if (isDir) {
-                // Limit FS operation
                 const children = await limit(() => fs.promises.readdir(currentPath));
-                
-                // Parallelize children processing WITHOUT wrapping the wait in the limiter
-                // This prevents deadlock where parents hold slots waiting for children
                 await Promise.all(children.map(child => traverse(path.join(currentPath, child), id)));
             }
         } catch (err) {
-            // Ignore access errors or races
-            if (outputChannel) {
-                outputChannel.appendLine(`Error scanning ${currentPath}: ${err}`);
-            }
+            if (outputChannel) outputChannel.appendLine(`Error scanning ${currentPath}: ${err}`);
         }
     }
 
     await traverse(rootPath);
-
     return { nodes, links };
 }

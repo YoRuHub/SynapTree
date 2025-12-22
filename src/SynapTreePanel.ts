@@ -102,9 +102,9 @@ export class SynapTreePanel {
         }
     }
 
-    public toggleLabels() {
+    public setLabels(visible: boolean) {
         if (this._panel) {
-            this._panel.webview.postMessage({ command: 'toggleLabels' });
+            this._panel.webview.postMessage({ command: 'setLabels', visible });
         }
     }
 
@@ -157,6 +157,18 @@ export class SynapTreePanel {
                 command: 'updateNodeStatusBatch',
                 changes: changesObj
             });
+        }
+    }
+
+    public notifyNodeAdded(node: any, parentId?: string) {
+        if (this._panel) {
+            this._panel.webview.postMessage({ command: 'addNode', node, parentId });
+        }
+    }
+
+    public notifyNodeDeleted(id: string) {
+        if (this._panel) {
+            this._panel.webview.postMessage({ command: 'removeNode', id });
         }
     }
 

@@ -220,7 +220,7 @@ window.addEventListener("message", (event) => {
             // Use zoomToFit to auto-calculate distance based on graph size
             // Add a small delay to allow force engine to spread nodes
             setTimeout(() => {
-                // State.Graph.zoomToFit(1000, 100); // User requested no auto-zoom
+              // State.Graph.zoomToFit(1000, 100); // User requested no auto-zoom
             }, 500);
             State.isFirstLoad = false;
           }
@@ -301,8 +301,8 @@ window.addEventListener("message", (event) => {
         searchNodes(message.query);
       }
     }
-  } else if (message.command === "toggleLabels") {
-    window.showLabels = !window.showLabels;
+  } else if (message.command === "setLabels") {
+    window.showLabels = message.visible;
     State.pulseObjects.forEach((obj) => {
       if (obj.labelSprite) {
         obj.labelSprite.visible = window.showLabels;
@@ -351,6 +351,39 @@ window.addEventListener("message", (event) => {
         activateNode(targetNode);
         updateBreadcrumbs(targetNode);
         log(`Auto Focused on: ${targetNode.name}`);
+      }
+    }
+  } else if (message.command === "addNode") {
+    const { node, parentId } = message;
+    if (State.Graph) {
+      const { nodes, links } = State.Graph.graphData();
+      // Check duplicate
+      if (!nodes.find(n => n.id === node.id)) {
+        nodes.push(node);
+        if (parentId) {
+          links.push({ source: parentId, target: node.id });
+        }
+        State.Graph.graphData({ nodes, links });
+        log(`[Graph] Added node: ${node.name}`);
+      }
+    }
+  } else if (message.command === "removeNode") {
+    const { id } = message;
+    if (State.Graph) {
+      const { nodes, links } = State.Graph.graphData();
+      const newNodes = nodes.filter(n => n.id !== id);
+
+      // Filter links where source or target matches id
+      // Note: d3-force converts links to objects {source: Node, target: Node, ...}
+      const newLinks = links.filter(l => {
+        const sId = (typeof l.source === 'object') ? l.source.id : l.source;
+        const tId = (typeof l.target === 'object') ? l.target.id : l.target;
+        return sId !== id && tId !== id;
+      });
+
+      if (nodes.length !== newNodes.length) {
+        State.Graph.graphData({ nodes: newNodes, links: newLinks });
+        log(`[Graph] Removed node: ${id}`);
       }
     }
   }
