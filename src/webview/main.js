@@ -272,13 +272,23 @@ window.addEventListener("message", (event) => {
   } else if (message.command === "search") {
     const searchContainer = document.getElementById("search-container");
     if (searchContainer) {
-      if (searchContainer.classList.contains("visible")) {
-        const searchInput = document.getElementById("search-input");
-        if (searchInput) {
-          searchInput.focus();
-          searchInput.select();
+      // Toggle Logic: If query is empty, treat as a toggle
+      if (!message.query) {
+        if (searchContainer.classList.contains("visible")) {
+          // If already visible, hide it (Toggle Off)
+          hideSearch();
+          return;
+        } else {
+          // IF hidden, show and focus (Toggle On)
+          searchContainer.classList.add("visible");
+          const searchInput = document.getElementById("search-input");
+          setTimeout(() => searchInput && searchInput.focus(), 100);
+          return;
         }
-      } else {
+      }
+
+      // If query is present (Programmatic Search), ensure visible
+      if (!searchContainer.classList.contains("visible")) {
         searchContainer.classList.add("visible");
         const searchInput = document.getElementById("search-input");
         setTimeout(() => searchInput && searchInput.focus(), 100);

@@ -12,23 +12,22 @@ resetRootBtn.style.cssText = `
     position: absolute;
     top: 20px;
     left: 20px;
-    background: rgba(20, 25, 40, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    padding: 8px 16px;
-    color: #fff;
-    font-family: sans-serif;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: Inter, system-ui, sans-serif;
     font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
     display: none; /* Hidden by default */
     align-items: center;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     z-index: 2000;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 `;
-resetRootBtn.onmouseenter = () => { resetRootBtn.style.background = 'rgba(40, 45, 70, 0.9)'; };
-resetRootBtn.onmouseleave = () => { resetRootBtn.style.background = 'rgba(20, 25, 40, 0.85)'; };
+resetRootBtn.onmouseenter = () => { resetRootBtn.style.color = '#fff'; };
+resetRootBtn.onmouseleave = () => { resetRootBtn.style.color = 'rgba(255, 255, 255, 0.6)'; };
 resetRootBtn.onclick = () => {
     vscode.postMessage({ command: 'nodeAction', action: 'resetRoot', path: 'root' });
 };
@@ -195,13 +194,16 @@ let currentMatchIndex = -1;
 
 export function searchNodes(query) {
     query = query.toLowerCase().trim();
-    const searchStatus = document.getElementById('status');
+    const status = document.getElementById('status');
     matchedNodes = [];
     currentMatchIndex = -1;
 
     if (!query) {
-        searchStatus.style.display = 'none';
-        State.pulseObjects.forEach(obj => { obj.isMatch = false; });
+        if (status) {
+            status.style.display = 'none';
+            status.innerText = '';
+        }
+        State.pulseObjects.forEach((obj => { obj.isMatch = false; }));
         updateNavState();
         return;
     }
@@ -219,15 +221,19 @@ export function searchNodes(query) {
         });
 
         if (matchedNodes.length > 0) {
-            searchStatus.innerText = `${matchedNodes.length} matches found`;
-            searchStatus.style.display = 'block';
-            searchStatus.style.backgroundColor = 'rgba(255, 255, 0, 0.1)';
+            if (status) {
+                status.innerText = `${matchedNodes.length} matches`;
+                status.style.color = '#ffffff';
+                status.style.display = 'block';
+            }
             currentMatchIndex = 0;
             focusOnNode(matchedNodes[0]);
         } else {
-            searchStatus.innerText = 'No matches found';
-            searchStatus.style.display = 'block';
-            searchStatus.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+            if (status) {
+                status.innerText = 'No matches found';
+                status.style.color = '#ff6b6b';
+                status.style.display = 'block';
+            }
         }
         updateNavState();
     }
@@ -236,14 +242,17 @@ export function searchNodes(query) {
 export function hideSearch() {
     const searchContainer = document.getElementById('search-container');
     const searchInput = document.getElementById('search-input');
-    const searchStatus = document.getElementById('status');
+    const status = document.getElementById('status');
     const searchCount = document.getElementById('search-results-count');
 
     if (searchContainer && searchContainer.classList.contains('visible')) {
         searchContainer.classList.remove('visible');
         if (searchInput) searchInput.value = '';
         State.pulseObjects.forEach(obj => { obj.isMatch = false; });
-        searchStatus.style.display = 'none';
+        if (status) {
+             status.innerText = '';
+             status.style.display = 'none';
+        }
         matchedNodes = [];
         currentMatchIndex = -1;
         if (searchCount) searchCount.innerText = '';

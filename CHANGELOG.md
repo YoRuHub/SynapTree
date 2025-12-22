@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.1.0] - 2025-12-22
+
+- Design improvements
+
 ## [0.0.9] - 2025-12-22
 
 ### Added

@@ -24,7 +24,7 @@
 
       #search-container {
         position: absolute;
-        top: 20px;
+        top: 50px;
         left: 50%;
         transform: translateX(-50%) translateY(-100px);
         z-index: 1000;
@@ -95,20 +95,25 @@
         white-space: nowrap;
       }
 
-      #search-status {
+
+
+      #status {
         position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
+        top: 20px;
+        right: 20px;
         z-index: 100;
-        font-size: 12px;
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 500;
         pointer-events: none;
-        text-align: center;
-        padding: 5px 15px;
-        border-radius: 15px;
-        background: rgba(0, 0, 0, 0.5);
-        color: rgba(255, 255, 255, 0.7);
+        text-align: right;
+        padding: 0;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.8);
+        border: none;
         display: none;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        transition: all 0.2s ease;
       }
 
       #graph {
