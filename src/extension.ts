@@ -182,6 +182,11 @@ function setupFileSystemWatcher(context: vscode.ExtensionContext, sidebarProvide
         const parentPath = path.dirname(uri.fsPath);
         const node = await createSingleNode(uri.fsPath, parentPath);
 
+        // Inject Git Status
+        if (node) {
+            node.gitStatus = getGitFileStatus(uri);
+        }
+
         if (node) {
             sidebarProvider.notifyNodeAdded(node, parentPath);
             if (SynapTreePanel.currentPanel) {
@@ -216,6 +221,11 @@ function setupFileSystemWatcher(context: vscode.ExtensionContext, sidebarProvide
             // Add New
             const parentPath = path.dirname(file.newUri.fsPath);
             const node = await createSingleNode(file.newUri.fsPath, parentPath);
+
+            // Inject Git Status
+            if (node) {
+                node.gitStatus = getGitFileStatus(file.newUri);
+            }
             if (node) {
                 sidebarProvider.notifyNodeAdded(node, parentPath);
                 if (SynapTreePanel.currentPanel) {
@@ -334,6 +344,31 @@ function setupGitWatcher(context: vscode.ExtensionContext, sidebarProvider: Syna
     }));
 
     return () => updateGitStatus(true);
+}
+
+// Helper to get status of a single file
+function getGitFileStatus(uri: vscode.Uri): string | undefined {
+    const gitExtension = vscode.extensions.getExtension<any>('vscode.git');
+    if (!gitExtension) return undefined;
+    const git = gitExtension.exports.getAPI(1);
+    if (!git.repositories || git.repositories.length === 0) return undefined;
+
+    // Check all repos (usually just one)
+    for (const repo of git.repositories) {
+        // Check Index
+        const indexChange = repo.state.indexChanges.find((c: any) => c.uri.fsPath === uri.fsPath);
+        if (indexChange) return 'staged';
+
+        // Check Working Tree
+        const workingChange = repo.state.workingTreeChanges.find((c: any) => c.uri.fsPath === uri.fsPath);
+        if (workingChange) {
+            if (workingChange.status === 7 || workingChange.status === 8) {
+                return 'untracked';
+            }
+            return 'modified';
+        }
+    }
+    return undefined;
 }
 
 export function deactivate() {
