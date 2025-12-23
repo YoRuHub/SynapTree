@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.1.3] - 2025-12-23
+
+### Fixed
+- **Git Status Bug**: Fixed an issue where newly created or renamed files would not immediately reflect their Git status (color) in the graph. The graph now accurately updates the node color (e.g., Untracked Green) instantly upon creation.
+
+### Documentation
+- **Visual Showcase**: Updated README with new screenshots demonstrating key features (Context Menu, Search Ripple, Panel View, Root Focus).
+
+
 ## [0.1.2] - 2025-12-22
 
 ### Added
