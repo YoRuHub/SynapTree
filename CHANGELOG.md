@@ -1,5 +1,8 @@
 # Change Log
 
+## [0.1.5]
+- Fix: Resolved issue where extension would not load in release version due to missing dependencies.
+
 ## [0.1.4] - 2025-12-24
 
 ### Fixed

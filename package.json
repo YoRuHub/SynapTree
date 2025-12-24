@@ -2,7 +2,7 @@
     "name": "synaptree",
     "displayName": "SynapTree",
     "description": "Visualize your workspace in a 3D interactive graph.",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "icon": "resources/logo.jpg",
     "publisher": "YoRuHub",
     "license": "MIT",

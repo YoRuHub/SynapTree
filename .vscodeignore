@@ -13,3 +13,4 @@ out/test
 **/*.map
 !src/webview/**
 .env
+!node_modules
