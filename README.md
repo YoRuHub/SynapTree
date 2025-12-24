@@ -3,7 +3,7 @@
 **Visualize your workspace like a neural network.**  
 SynapTree transforms your project's file structure into a stunning, interactive 3D Force-Directed Graph.
 
-![SynapTree Overview](resources/images/sidebar_view.png)
+![SynapTree Overview](https://raw.githubusercontent.com/YoRuHub/SynapTree/main/resources/images/sidebar_view.png)
 
 ## ✨ Features
 
@@ -18,13 +18,13 @@ SynapTree transforms your project's file structure into a stunning, interactive 
 - **Auto-Focus**: Opening a file in the editor automatically centers the camera on the corresponding node (Sync).
 - **Navigation**: Click nodes to open files. Use the HUD Reset button to return to the root.
 
-![Context Menu](resources/images/context_menu.png)
+![Context Menu](https://raw.githubusercontent.com/YoRuHub/SynapTree/main/resources/images/context_menu.png)
 
 ### 📐 Flexible Layout
 
 SynapTree isn't limited to the sidebar. Open it in a panel (e.g., below the Explorer) for a widescreen view of your architecture.
 
-![Panel View](resources/images/panel_view.png)
+![Panel View](https://raw.githubusercontent.com/YoRuHub/SynapTree/main/resources/images/panel_view.png)
 
 ### 🧬 Real-time Git Integration
 
@@ -47,7 +47,7 @@ The graph naturally evolves as you work.
 
 Right-click any folder to **Set as Root**. Isolate specific modules or layers (e.g., `src/domain`) to focus on what matters.
 
-![Root Focus](resources/images/root_focus.png)
+![Root Focus](https://raw.githubusercontent.com/YoRuHub/SynapTree/main/resources/images/root_focus.png)
 
 ### 🔍 Deep Search & Navigation
 
@@ -56,7 +56,7 @@ Right-click any folder to **Set as Root**. Isolate specific modules or layers (e
 - **Cycle**: Use `<` and `>` buttons to jump between multiple search results.
 - **Breadcrumbs**: Track your current location with an interactive path bar at the bottom.
 
-![Search Ripple](resources/images/search_ripple.png)
+![Search Ripple](https://raw.githubusercontent.com/YoRuHub/SynapTree/main/resources/images/search_ripple.png)
 
 ### 🎨 Customization
 
