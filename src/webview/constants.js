@@ -15,21 +15,25 @@ export const GIT_STATUS_CONFIG = {
     modified: {
         color: '#ffaa00', // Orange (VS Code Modified)
         opacityGlow: 0.4,
-        opacityAura: 0.2
+        opacityAura: 0.2,
+        auraScale: 1.8 // Slightly larger
     },
     untracked: {
         color: '#73c991', // Light Green (VS Code Untracked)
         opacityGlow: 0.4,
-        opacityAura: 0.2
+        opacityAura: 0.2,
+        auraScale: 1.8 // Slightly larger
     },
     staged: {
         color: '#55ff55', // Bright Green (Staged)
         opacityGlow: 0.4,
-        opacityAura: 0.2
+        opacityAura: 0.2,
+        auraScale: 1.5
     },
     default: {
         color: '#ffffff', // Fallback
         opacityGlow: 0.15,
-        opacityAura: 0.06
+        opacityAura: 0.06,
+        auraScale: 1.0
     }
 };

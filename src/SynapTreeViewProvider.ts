@@ -158,6 +158,18 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    public notifyNodesAdded(nodes: any[]) {
+        if (this._view && nodes.length > 0) {
+            this._view.webview.postMessage({ command: 'addNodes', nodes });
+        }
+    }
+
+    public notifyNodesDeleted(ids: string[]) {
+        if (this._view && ids.length > 0) {
+            this._view.webview.postMessage({ command: 'removeNodes', ids });
+        }
+    }
+
     private async handleNodeAction(message: any) {
         const { action, path } = message;
         if (!path) return;

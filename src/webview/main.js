@@ -100,17 +100,13 @@ try {
       } else {
         const s = 1 + Math.sin(obj.t) * 0.12;
         obj.core.scale.set(s, s, s);
-        obj.innerGlow.scale.set(s, s, s);
-        obj.aura.scale.set(s, s, s);
-        obj.aura.visible = true;
-        obj.innerGlow.visible = true;
-        obj.ripple.visible = false;
 
-        // --- COLOR LOGIC (Loop with Status) ---
+        // --- COLOR & SCALE LOGIC (Loop with Status) ---
         let targetInnerColor = obj.baseColor;
         let targetOuterColor = "#ffffff"; // Default Glassy White
         let targetOpacityGlow = GIT_STATUS_CONFIG.default.opacityGlow;
         let targetOpacityAura = 0.02; // Completely transparent default
+        let targetAuraScale = 1.0;
 
         // Use centralized config
         if (obj.node.gitStatus && GIT_STATUS_CONFIG[obj.node.gitStatus]) {
@@ -119,7 +115,17 @@ try {
           targetOuterColor = conf.color;
           targetOpacityGlow = conf.opacityGlow;
           targetOpacityAura = conf.opacityAura;
+          targetAuraScale = conf.auraScale || 1.0;
         }
+
+        // Apply Aura Scale (multiplied by pulse)
+        const auraS = s * targetAuraScale;
+        obj.innerGlow.scale.set(auraS, auraS, auraS);
+        obj.aura.scale.set(auraS, auraS, auraS);
+
+        obj.aura.visible = true;
+        obj.innerGlow.visible = true;
+        obj.ripple.visible = false;
 
         obj.innerGlow.material.color.set(targetInnerColor);
         obj.aura.material.color.set(targetOuterColor);
@@ -384,6 +390,56 @@ window.addEventListener("message", (event) => {
       if (nodes.length !== newNodes.length) {
         State.Graph.graphData({ nodes: newNodes, links: newLinks });
         log(`[Graph] Removed node: ${id}`);
+      }
+    }
+  } else if (message.command === "addNodes") {
+    const { nodes: newNodesList } = message;
+    if (State.Graph && newNodesList && newNodesList.length > 0) {
+      // Pause Physics for ingestion
+      State.Graph.pauseAnimation();
+
+      const { nodes, links } = State.Graph.graphData();
+      let addedCount = 0;
+
+      newNodesList.forEach((node) => {
+        // Check duplicate
+        if (!nodes.find((n) => n.id === node.id)) {
+          nodes.push(node);
+          if (node.parentId) {
+            links.push({ source: node.parentId, target: node.id });
+          }
+          addedCount++;
+        }
+      });
+
+      if (addedCount > 0) {
+        State.Graph.graphData({ nodes, links });
+        log(`[Graph] Batch added ${addedCount} nodes`);
+      }
+
+      // Resume Physics
+      setTimeout(() => {
+        State.Graph.resumeAnimation();
+      }, 50);
+    }
+  } else if (message.command === "removeNodes") {
+    const { ids } = message;
+    if (State.Graph && ids && ids.length > 0) {
+      const { nodes, links } = State.Graph.graphData();
+      const idsSet = new Set(ids);
+
+      const newNodes = nodes.filter((n) => !idsSet.has(n.id));
+
+      // Filter links where source or target matches any id in the set
+      const newLinks = links.filter((l) => {
+        const sId = typeof l.source === "object" ? l.source.id : l.source;
+        const tId = typeof l.target === "object" ? l.target.id : l.target;
+        return !idsSet.has(sId) && !idsSet.has(tId);
+      });
+
+      if (nodes.length !== newNodes.length) {
+        State.Graph.graphData({ nodes: newNodes, links: newLinks });
+        log(`[Graph] Batch removed ${nodes.length - newNodes.length} nodes`);
       }
     }
   }

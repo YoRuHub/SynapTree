@@ -22,26 +22,52 @@ export interface GraphData {
     links: GraphLink[];
 }
 
-export async function createSingleNode(currentPath: string, parentId?: string): Promise<GraphNode | null> {
+export interface WorkspaceConfig {
+    dirColor: string;
+    rootColor: string;
+    defaultFileColor: string;
+    extensionMap: Record<string, string>;
+    ignorePatterns: string[];
+}
+
+export function getWorkspaceConfig(): WorkspaceConfig {
+    const config = vscode.workspace.getConfiguration('synaptree.colors');
+    const dirColor = config.get<string>('directory', '#0088ff');
+    const rootColor = config.get<string>('root', '#ffffff');
+    const defaultFileColor = config.get<string>('defaultFile', '#aaaaaa');
+    const extensionsConfig = config.get<any>('extensions', []);
+
+    const generalConfig = vscode.workspace.getConfiguration('synaptree.general');
+    const ignorePatterns = generalConfig.get<string[]>('ignorePatterns', []);
+
+    const extensionMap: Record<string, string> = {};
+    if (Array.isArray(extensionsConfig)) {
+        extensionsConfig.forEach(item => {
+            if (item && item.extension && item.color) {
+                extensionMap[item.extension.toLowerCase()] = item.color;
+            }
+        });
+    } else if (typeof extensionsConfig === 'object' && extensionsConfig !== null) {
+        for (const [ext, color] of Object.entries(extensionsConfig)) {
+            extensionMap[ext.toLowerCase()] = color as string;
+        }
+    }
+
+    return { dirColor, rootColor, defaultFileColor, extensionMap, ignorePatterns };
+}
+
+export async function createSingleNode(currentPath: string, parentId?: string, cachedConfig?: WorkspaceConfig): Promise<GraphNode | null> {
     try {
         const stats = await fs.promises.stat(currentPath);
         const isDir = stats.isDirectory();
         const name = path.basename(currentPath);
         const id = currentPath;
 
-        // Load configuration (Duplicate load for now to ensure fresh config on single update)
-        // In real app, might want to cache this or pass it in.
-        const config = vscode.workspace.getConfiguration('synaptree.colors');
-        const dirColor = config.get<string>('directory', '#0088ff');
-        const rootColor = config.get<string>('root', '#ffffff');
-        const defaultFileColor = config.get<string>('defaultFile', '#aaaaaa');
-        const extensionsConfig = config.get<any>('extensions', []);
-
-        const generalConfig = vscode.workspace.getConfiguration('synaptree.general');
-        const ignorePatterns = generalConfig.get<string[]>('ignorePatterns', []);
+        // Use cached config or load fresh
+        const config = cachedConfig || getWorkspaceConfig();
 
         // Ignore Check
-        const shouldIgnore = ignorePatterns.some(pattern => {
+        const shouldIgnore = config.ignorePatterns.some(pattern => {
             if (pattern.includes('*')) {
                 const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$', 'i');
                 return regex.test(name);
@@ -52,27 +78,13 @@ export async function createSingleNode(currentPath: string, parentId?: string): 
         if (shouldIgnore) return null;
 
         // Color Logic
-        let color = defaultFileColor;
+        let color = config.defaultFileColor;
         if (isDir) {
-            color = (!parentId) ? rootColor : dirColor;
+            color = (!parentId) ? config.rootColor : config.dirColor;
         } else {
             const ext = path.extname(name).toLowerCase();
-            const extensionMap: Record<string, string> = {};
-
-            if (Array.isArray(extensionsConfig)) {
-                extensionsConfig.forEach(item => {
-                    if (item && item.extension && item.color) {
-                        extensionMap[item.extension.toLowerCase()] = item.color;
-                    }
-                });
-            } else if (typeof extensionsConfig === 'object' && extensionsConfig !== null) {
-                for (const [ext, color] of Object.entries(extensionsConfig)) {
-                    extensionMap[ext.toLowerCase()] = color as string;
-                }
-            }
-
-            if (extensionMap[ext]) {
-                color = extensionMap[ext];
+            if (config.extensionMap[ext]) {
+                color = config.extensionMap[ext];
             }
         }
 
@@ -93,26 +105,9 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
-    // Load configuration to pass down? 
-    // For now, let's keep traverse logic mostly as is but maybe reuse createSingleNode?
-    // Actually, reusing createSingleNode inside the loop is less efficient due to config reading every time.
-    // Let's Keep getWorkspaceData optimized as is, but duplicate the logic in createSingleNode for single updates.
-    // This is a trade-off: duplication vs performance. Here performance of full scan is critical. Single update performance is less critical but config read is fast.
-
-    // ... (Keeping original setup for bulk scan performance) ...
-    const config = vscode.workspace.getConfiguration('synaptree.colors');
-    const dirColor = config.get<string>('directory', '#0088ff'); // Blue
-    const rootColor = config.get<string>('root', '#ffffff'); // White
-    const defaultFileColor = config.get<string>('defaultFile', '#aaaaaa'); // Gray
-    const extensionsConfig = config.get<any>('extensions', []);
-    const extensionMap: Record<string, string> = {};
-    if (Array.isArray(extensionsConfig)) {
-        extensionsConfig.forEach(item => { extensionMap[item.extension.toLowerCase()] = item.color; });
-    } else if (typeof extensionsConfig === 'object' && extensionsConfig !== null) {
-        for (const [ext, color] of Object.entries(extensionsConfig)) { extensionMap[ext.toLowerCase()] = color as string; }
-    }
-    const generalConfig = vscode.workspace.getConfiguration('synaptree.general');
-    const ignorePatterns = generalConfig.get<string[]>('ignorePatterns', []);
+    // Get config once for the whole scan
+    const config = getWorkspaceConfig();
+    const { dirColor, rootColor, defaultFileColor, extensionMap, ignorePatterns } = config;
 
     // Concurrency Limiter
     const MAX_CONCURRENT = 50;
@@ -132,7 +127,7 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
                     if (queue.length > 0) {
                         const next = queue.shift();
                         if (next) {
-                            activeScans++; // Re-occupy slot immediately for the next task
+                            activeScans++;
                             next();
                         }
                     }

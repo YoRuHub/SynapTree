@@ -172,6 +172,18 @@ export class SynapTreePanel {
         }
     }
 
+    public notifyNodesAdded(nodes: any[]) {
+        if (this._panel && nodes.length > 0) {
+            this._panel.webview.postMessage({ command: 'addNodes', nodes });
+        }
+    }
+
+    public notifyNodesDeleted(ids: string[]) {
+        if (this._panel && ids.length > 0) {
+            this._panel.webview.postMessage({ command: 'removeNodes', ids });
+        }
+    }
+
     public dispose() {
         SynapTreePanel.currentPanel = undefined;
         this._panel.dispose();

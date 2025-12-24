@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.1.4] - 2025-12-24
+
+### Fixed
+- **Performance Fixes**: Optimized mass file operation handling and webview rendering for better scalability.
+
+### Changed
+- **Visuals**: Increased the aura size for modified and untracked files for better visibility.
+
 ## [0.1.3] - 2025-12-23
 
 ### Fixed

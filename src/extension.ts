@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { SynapTreeViewProvider } from './SynapTreeViewProvider';
 import { SynapTreePanel } from './SynapTreePanel';
-import { createSingleNode } from './dataRegistry';
+import { ChangeProcessor } from './services/ChangeProcessor';
 
 export function activate(context: vscode.ExtensionContext) {
     const outputChannel = vscode.window.createOutputChannel('SynapTree');
@@ -134,16 +133,6 @@ export function activate(context: vscode.ExtensionContext) {
                     setTimeout(() => {
                         if (vscode.window.activeTextEditor) {
                             const filePath = vscode.window.activeTextEditor.document.uri.fsPath;
-                            // We don't have a direct public 'focusNode' on sidebarProvider, but refresh handles it via onDidChangeActiveTextEditor if we trigger it? 
-                            // Actually onDidChangeActiveTextEditor only fires on change.
-
-                            // Let's manually trigger the message on the sidebar
-                            // Accessing private _view via public method or casting? 
-                            // Since we can't easily access _view, let's just rely on refresh() and maybe the user switching tabs. 
-                            // Or better, let's add a public focus method to SidebarProvider like we did for setRoot.
-                            // For now, let's stick to refresh. The refresh() sends setData which might not trigger focus unless we pass focusTargetId.
-
-                            // Let's pass the current file to refresh if autoFocus is on!
                             sidebarProvider.refresh(filePath);
                         }
                     }, 500);
@@ -162,76 +151,37 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     // 5. File System Watcher (Auto-Refresh on Create/Delete)
-    setupFileSystemWatcher(context, sidebarProvider, outputChannel);
+    setupFileSystemWatcher(context, sidebarProvider, outputChannel, getGitFileStatus);
 }
 
 // --- File System Watcher ---
-function setupFileSystemWatcher(context: vscode.ExtensionContext, sidebarProvider: SynapTreeViewProvider, outputChannel: vscode.OutputChannel) {
+function setupFileSystemWatcher(context: vscode.ExtensionContext, sidebarProvider: SynapTreeViewProvider, outputChannel: vscode.OutputChannel, getGitStatus: (uri: vscode.Uri) => string | undefined) {
     const watcher = vscode.workspace.createFileSystemWatcher('**/*');
+
+    // Initialize Processor
+    const processor = new ChangeProcessor(sidebarProvider, outputChannel, getGitStatus);
 
     // Check ignore helper
     const isIgnored = (pathStr: string) => {
         return pathStr.includes('/.git/') || pathStr.includes('/.gemini/') || pathStr.includes('node_modules');
     };
 
-    const handleCreate = async (uri: vscode.Uri) => {
+    const handleCreate = (uri: vscode.Uri) => {
         if (isIgnored(uri.path)) return;
-
-        outputChannel.appendLine(`[FS] Create: ${uri.fsPath}`);
-        // Create single node
-        const parentPath = path.dirname(uri.fsPath);
-        const node = await createSingleNode(uri.fsPath, parentPath);
-
-        // Inject Git Status
-        if (node) {
-            node.gitStatus = getGitFileStatus(uri);
-        }
-
-        if (node) {
-            sidebarProvider.notifyNodeAdded(node, parentPath);
-            if (SynapTreePanel.currentPanel) {
-                SynapTreePanel.currentPanel.notifyNodeAdded(node, parentPath);
-            }
-        }
+        processor.queueFileEvent('create', uri);
     };
 
     const handleDelete = (uri: vscode.Uri) => {
         if (isIgnored(uri.path)) return;
-
-        outputChannel.appendLine(`[FS] Delete: ${uri.fsPath}`);
-
-        sidebarProvider.notifyNodeDeleted(uri.fsPath);
-        if (SynapTreePanel.currentPanel) {
-            SynapTreePanel.currentPanel.notifyNodeDeleted(uri.fsPath);
-        }
+        processor.queueFileEvent('delete', uri);
     };
 
     const handleRename = async (e: vscode.FileRenameEvent) => {
         for (const file of e.files) {
             if (isIgnored(file.oldUri.path) && isIgnored(file.newUri.path)) continue;
 
-            outputChannel.appendLine(`[FS] Rename: ${file.oldUri.fsPath} -> ${file.newUri.fsPath}`);
-
-            // Delete Old
-            sidebarProvider.notifyNodeDeleted(file.oldUri.fsPath);
-            if (SynapTreePanel.currentPanel) {
-                SynapTreePanel.currentPanel.notifyNodeDeleted(file.oldUri.fsPath);
-            }
-
-            // Add New
-            const parentPath = path.dirname(file.newUri.fsPath);
-            const node = await createSingleNode(file.newUri.fsPath, parentPath);
-
-            // Inject Git Status
-            if (node) {
-                node.gitStatus = getGitFileStatus(file.newUri);
-            }
-            if (node) {
-                sidebarProvider.notifyNodeAdded(node, parentPath);
-                if (SynapTreePanel.currentPanel) {
-                    SynapTreePanel.currentPanel.notifyNodeAdded(node, parentPath);
-                }
-            }
+            processor.queueFileEvent('delete', file.oldUri);
+            processor.queueFileEvent('create', file.newUri);
         }
     };
 
