@@ -64,6 +64,10 @@ export class SynapTreeViewProvider implements vscode.WebviewViewProvider {
                     case 'ready':
                         this.refresh();
                         break;
+                    case 'emergencyRefresh':
+                        this._outputChannel.appendLine('[Sidebar] Emergency Refresh Requested. Recovering...');
+                        setTimeout(() => this.refresh(), 1000);
+                        break;
                     case 'openFile':
                         if (message.path) {
                             vscode.window.showTextDocument(vscode.Uri.file(message.path));

@@ -92,9 +92,6 @@ export function activate(context: vscode.ExtensionContext) {
 
             if (result === 'Yes') {
                 const config = vscode.workspace.getConfiguration('synaptree');
-                // Inspect details to find what keys exist, but easier to just reset known keys
-                // Or loop through properties in package.json (runtime safe way: reset specific sections)
-
                 // Hardcoded consistent reset for safety
                 const keys = [
                     'colors.directory', 'colors.root', 'colors.defaultFile', 'colors.extensions',
@@ -189,7 +186,8 @@ function setupFileSystemWatcher(context: vscode.ExtensionContext, sidebarProvide
         watcher.onDidCreate(handleCreate),
         watcher.onDidDelete(handleDelete),
         vscode.workspace.onDidRenameFiles(handleRename),
-        watcher // Dispose watcher
+        watcher, // Dispose watcher
+        processor // Dispose processor (Watchdog)
     );
 }
 

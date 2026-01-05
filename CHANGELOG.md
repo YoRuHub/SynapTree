@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.1.6] - 2026-01-06
+
+### Fixed
+- **Auto-Recovery**: Implemented a comprehensive auto-recovery mechanism. The extension now automatically detects and recovers from "stalled" processes during massive file operations (Watchdog) and runtime errors in the webview.
+- **Improved Stability**: Fixed a potential deadlock in the file change processor that could occur during rapid file system events.
+- **Resource Management**: Optimized cleanup logic to prevent memory leaks in background monitoring processes.
+
 ## [0.1.5]
 - Fix: Resolved issue where extension would not load in release version due to missing dependencies.
 

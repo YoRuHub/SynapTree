@@ -18,6 +18,29 @@ const status = document.getElementById("status");
 // Init UI
 setupUI();
 
+// --- ERROR HANDLER ---
+function handleError(error, context = "") {
+  const msg = error.message || error;
+  log(`Error (${context}): ${msg}`);
+
+  const status = document.getElementById("status");
+  if (status) {
+    status.style.display = "block";
+    status.style.color = "#ff6b6b";
+    status.innerText = `Error: ${msg}. Auto-recovering...`;
+  }
+
+  // Trigger Recovery
+  setTimeout(() => {
+    vscode.postMessage({ command: 'emergencyRefresh' });
+  }, 1000);
+}
+
+// Runtime Error Handler
+window.onerror = function (msg, url, line) {
+  handleError(`${msg} at ${line}`, "Runtime");
+};
+
 // --- GRAPH INIT ---
 try {
   State.Graph = ForceGraph3D()(elem)
@@ -46,6 +69,7 @@ try {
         }
         hideContextMenu(); // Ensure menu closes on left click
       } catch (err) {
+        // Log only, click error usually doesn't need full refresh
         log("Click Error: " + err.message);
       }
     })
@@ -143,14 +167,8 @@ try {
   }
   animate();
 } catch (err) {
-  status.innerText = "Graph Init Error: " + err.message;
-  log("Graph Init Error: " + err.stack);
+  handleError(err, "Graph Init");
 }
-
-// Runtime Error Handler
-window.onerror = function (msg, url, line) {
-  log(`Runtime Error: ${msg} at ${url}:${line}`);
-};
 
 // --- RESIZE HANDLER ---
 window.addEventListener("resize", () => {
@@ -160,7 +178,6 @@ window.addEventListener("resize", () => {
   }
 });
 
-// --- HELPER to apply status ---
 // --- HELPER to apply status ---
 function applyNodeStatus(targetId, newStatus) {
   // log(`[Update] Request for: ${targetId} -> ${newStatus}`);
@@ -181,9 +198,7 @@ function applyNodeStatus(targetId, newStatus) {
       const objId = (obj.nodeId || "").normalize("NFC").toLowerCase();
       return objId === lowerTarget;
     });
-    // if (targetObj) {
-    //   log(`[Update] Fuzzy match found: ${targetObj.nodeId}`);
-    // }
+
   }
 
   if (targetObj) {
@@ -224,10 +239,7 @@ window.addEventListener("message", (event) => {
           status.style.display = "none";
           if (State.isFirstLoad) {
             // Use zoomToFit to auto-calculate distance based on graph size
-            // Add a small delay to allow force engine to spread nodes
-            setTimeout(() => {
-              // State.Graph.zoomToFit(1000, 100); // User requested no auto-zoom
-            }, 500);
+            // State.Graph.zoomToFit(1000, 100); // User requested no auto-zoom
             State.isFirstLoad = false;
           }
 
@@ -257,9 +269,7 @@ window.addEventListener("message", (event) => {
 
           // --- PROCESS QUEUE ---
           if (State.pendingUpdates.size > 0) {
-            // log(
-            //   `Processing ${State.pendingUpdates.size} queued git updates...`
-            // );
+
             State.pendingUpdates.forEach((st, id) => {
               applyNodeStatus(id, st);
             });
@@ -272,8 +282,7 @@ window.addEventListener("message", (event) => {
         status.innerText = "Error: No nodes found in workspace";
       }
     } catch (err) {
-      log("setData Error: " + err.message);
-      status.innerText = "Error processing data: " + err.message;
+      handleError(err, "setData");
     }
   } else if (message.command === "search") {
     const searchContainer = document.getElementById("search-container");

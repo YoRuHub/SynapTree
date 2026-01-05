@@ -23,6 +23,8 @@ export class ChangeProcessor {
     private outputChannel: vscode.OutputChannel;
     private getGitStatus: (uri: vscode.Uri) => string | undefined;
 
+    private watchdogTimer: NodeJS.Timeout | undefined;
+
     constructor(
         sidebarProvider: SynapTreeViewProvider,
         outputChannel: vscode.OutputChannel,
@@ -31,12 +33,38 @@ export class ChangeProcessor {
         this.sidebarProvider = sidebarProvider;
         this.outputChannel = outputChannel;
         this.getGitStatus = getGitStatus;
+        this.startWatchdog();
+    }
+
+    private lastHeartbeat: number = Date.now();
+
+    private startWatchdog() {
+        // Check every 5 seconds
+        this.watchdogTimer = setInterval(() => {
+            if (this.processing && (Date.now() - this.lastHeartbeat > 15000)) {
+                this.outputChannel.appendLine('[Processor] Watchdog: Stalled process detected (Active Monitor). Resetting lock.');
+                this.processing = false;
+                // Optional: Try to kickstart queue if items exist
+                if (this.queue.length > 0) {
+                    this.processQueue();
+                }
+            }
+        }, 5000);
+    }
+
+    public dispose() {
+        if (this.watchdogTimer) {
+            clearInterval(this.watchdogTimer);
+            this.watchdogTimer = undefined;
+        }
     }
 
     public queueFileEvent(type: 'create' | 'delete', uri: vscode.Uri) {
+        // Active Watchdog is running via setInterval, so we don't need the check here anymore.
+
+
         // Optimize: If creating a file that is already pending delete, just remove from delete queue?
         // Or if deleting a file pending create, remove from create queue.
-
         if (type === 'delete') {
             this.queue = this.queue.filter(e => !(e.type === 'create' && e.uri.fsPath === uri.fsPath));
         } else if (type === 'create') {
@@ -55,6 +83,7 @@ export class ChangeProcessor {
     }
 
     private async processQueue() {
+        this.lastHeartbeat = Date.now();
         if (this.processing || this.queue.length === 0) return;
         this.processing = true;
 
@@ -100,20 +129,17 @@ export class ChangeProcessor {
                 }
             }
 
-            // Continue if more in queue
-            if (this.queue.length > 0) {
-                // Small delay to let event loop breathe and UI update
-                setTimeout(() => {
-                    this.processing = false;
-                    this.processQueue();
-                }, 10);
-                return; // processing stays true until next tick starts
-            }
 
         } catch (err) {
             this.outputChannel.appendLine(`[Processor] Error: ${err}`);
         } finally {
-            if (this.queue.length === 0) {
+            if (this.queue.length > 0) {
+                // Determine if we should continue processing immediately or wait
+                setTimeout(() => {
+                    this.processing = false;
+                    this.processQueue();
+                }, 10);
+            } else {
                 this.processing = false;
             }
         }
