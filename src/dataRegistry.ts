@@ -63,10 +63,8 @@ export async function createSingleNode(currentPath: string, parentId?: string, c
         const name = path.basename(currentPath);
         const id = currentPath;
 
-        // Use cached config or load fresh
         const config = cachedConfig || getWorkspaceConfig();
 
-        // Ignore Check
         const shouldIgnore = config.ignorePatterns.some(pattern => {
             if (pattern.includes('*')) {
                 const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$', 'i');
@@ -77,7 +75,6 @@ export async function createSingleNode(currentPath: string, parentId?: string, c
 
         if (shouldIgnore) return null;
 
-        // Color Logic
         let color = config.defaultFileColor;
         if (isDir) {
             color = (!parentId) ? config.rootColor : config.dirColor;
@@ -105,11 +102,9 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
 
-    // Get config once for the whole scan
     const config = getWorkspaceConfig();
     const { dirColor, rootColor, defaultFileColor, extensionMap, ignorePatterns } = config;
 
-    // Concurrency Limiter
     const MAX_CONCURRENT = 50;
     let activeScans = 0;
     const queue: (() => Promise<void>)[] = [];
@@ -151,7 +146,7 @@ export async function getWorkspaceData(rootPath: string, outputChannel?: vscode.
             const name = path.basename(currentPath);
             const id = currentPath;
 
-            const shouldIgnore = ignorePatterns.some(pattern => {
+            const shouldIgnore = ignorePatterns.some((pattern: string) => {
                 if (pattern.includes('*')) {
                     const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$', 'i');
                     return regex.test(name);

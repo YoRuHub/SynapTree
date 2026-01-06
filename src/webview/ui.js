@@ -250,8 +250,8 @@ export function hideSearch() {
         if (searchInput) searchInput.value = '';
         State.pulseObjects.forEach(obj => { obj.isMatch = false; });
         if (status) {
-             status.innerText = '';
-             status.style.display = 'none';
+            status.innerText = '';
+            status.style.display = 'none';
         }
         matchedNodes = [];
         currentMatchIndex = -1;
@@ -360,7 +360,7 @@ export function updateBreadcrumbs(node) {
         // Use full path for tooltip?
         item.title = n.path || n.name;
         item.innerText = n.name;
-        
+
         item.onclick = (e) => {
             e.stopPropagation();
             focusOnNode(n);
@@ -379,6 +379,5 @@ export function updateBreadcrumbs(node) {
     });
 
     breadcrumb.style.display = 'flex';
-    // Auto-scroll to the right so the current file is visible
     breadcrumb.scrollLeft = breadcrumb.scrollWidth;
 }

@@ -8,16 +8,13 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel.show(true);
     outputChannel.appendLine('SynapTree Activated (Modular Architecture)');
 
-    // 1. Register Sidebar Provider
     const sidebarProvider = new SynapTreeViewProvider(context.extensionUri, outputChannel);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(SynapTreeViewProvider.viewType, sidebarProvider)
     );
 
-    // Placeholder for Git Refresh function
     let triggerGitBroadcast = () => { };
 
-    // 2. Register Commands
     context.subscriptions.push(
         vscode.commands.registerCommand('synaptree.openSettings', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', 'synaptree');
@@ -32,7 +29,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
             outputChannel.appendLine('Workspace Refresh Triggered');
 
-            // Re-broadcast Git Status after a slight delay to allow graph to reload
             setTimeout(() => {
                 triggerGitBroadcast();
             }, 2000);
@@ -111,7 +107,6 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // 4. Configuration Watcher
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('synaptree')) {
             outputChannel.appendLine('Configuration changed, refreshing SynapTree...');
@@ -141,13 +136,11 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize context
     vscode.commands.executeCommand('setContext', 'synaptree:labelsVisible', true);
 
-    // 3. Git State Watcher
     const gitRefresh = setupGitWatcher(context, sidebarProvider, outputChannel);
     if (gitRefresh) {
         triggerGitBroadcast = gitRefresh;
     }
 
-    // 5. File System Watcher (Auto-Refresh on Create/Delete)
     setupFileSystemWatcher(context, sidebarProvider, outputChannel, getGitFileStatus);
 }
 
@@ -217,9 +210,6 @@ function setupGitWatcher(context: vscode.ExtensionContext, sidebarProvider: Syna
                 return;
             }
 
-            // Working Tree / Merge
-            // Status code mapping (heuristic based on common VS Code Git API behavior)
-            // 7 and 8 are often used for Untracked or Intent-to-add
             if (c.status === 7 || c.status === 8) {
                 currentStatus.set(c.uri.fsPath, 'untracked');
             } else {

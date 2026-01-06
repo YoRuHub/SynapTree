@@ -11,16 +11,12 @@ export function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.
 
     try {
         let html = fs.readFileSync(htmlUri.fsPath, 'utf8');
-        // Inject Config and I18N BEFORE main script runs. 
-        // Although module is deferred, putting it in head or before script tag is safer.
-        // We replace <!-- CONFIG --> if exists, or prepend to head/body.
-        // Let's inject it before </head> to be safe globally.
         if (html.includes('</head>')) {
             html = html.replace('</head>', `${configScript}${i18nScript}</head>`);
         } else {
             html = html.replace('</body>', `${configScript}${i18nScript}</body>`);
         }
-        
+
         return html
             .replace(/\${scriptUri}/g, scriptUri.toString())
             .replace(/\${cspSource}/g, cspSource);

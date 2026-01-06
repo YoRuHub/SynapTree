@@ -139,7 +139,6 @@ export function createNodeObject(node) {
     const group = new THREE.Group();
     const isDir = node.type === 'directory';
 
-    // Base Color: Determined by file type or default
     const baseColor = node.color || (isDir ? '#0088ff' : '#aaaaaa');
 
     // Defaults
@@ -150,7 +149,6 @@ export function createNodeObject(node) {
     let opacityAura = 0.00; // Completely transparent default
     let emissiveInt = 0.5;
 
-    // Apply Configuration from central object (Overrides defaults if status exists)
     if (node.gitStatus && GIT_STATUS_CONFIG[node.gitStatus]) {
         const conf = GIT_STATUS_CONFIG[node.gitStatus];
         auraColor = conf.color;
@@ -171,10 +169,9 @@ export function createNodeObject(node) {
     );
     group.add(core);
 
-    // --- ICON LOGIC ---
     if (!isDir && node.type === 'file' && window.synapTreeConfig && window.synapTreeConfig.iconsUri) {
         const ext = node.name.split('.').pop().toLowerCase();
-        
+
         const iconMap = {
             'ts': 'typescript.svg',
             'tsx': 'react.svg',
@@ -208,27 +205,27 @@ export function createNodeObject(node) {
             'gitattributes': 'git.svg',
             'dart': 'dart.svg',
             // Media
-            'png': 'image.svg', 
-            'jpg': 'image.svg', 
-            'jpeg': 'image.svg', 
-            'gif': 'image.svg', 
-            'bmp': 'image.svg', 
-            'ico': 'image.svg', 
-            'webp': 'image.svg', 
-            'svg': 'image.svg', 
-            'mp3': 'audio.svg', 
-            'wav': 'audio.svg', 
-            'ogg': 'audio.svg', 
-            'm4a': 'audio.svg', 
-            'mp4': 'video.svg', 
-            'mov': 'video.svg', 
-            'avi': 'video.svg', 
-            'webm': 'video.svg', 
+            'png': 'image.svg',
+            'jpg': 'image.svg',
+            'jpeg': 'image.svg',
+            'gif': 'image.svg',
+            'bmp': 'image.svg',
+            'ico': 'image.svg',
+            'webp': 'image.svg',
+            'svg': 'image.svg',
+            'mp3': 'audio.svg',
+            'wav': 'audio.svg',
+            'ogg': 'audio.svg',
+            'm4a': 'audio.svg',
+            'mp4': 'video.svg',
+            'mov': 'video.svg',
+            'avi': 'video.svg',
+            'webm': 'video.svg',
             'mkv': 'video.svg'
         };
-        
+
         const lowerName = node.name.toLowerCase();
-        
+
         let iconFile = iconMap[ext];
 
         // Specific Filename Overrides
@@ -258,27 +255,24 @@ export function createNodeObject(node) {
 
         if (iconFile) {
             const iconUrl = `${window.synapTreeConfig.iconsUri}/${iconFile}`;
-            
+
             const getIconMaterial = (url) => {
                 const key = `icon-${url}`;
                 if (!materialCache.has(key)) {
                     const loader = new THREE.TextureLoader();
                     const tex = loader.load(url);
-                    // Use white color to preserve original SVG colors
-                    const mat = new THREE.SpriteMaterial({ 
-                        map: tex, 
-                        color: 0xffffff, 
-                        transparent: true, 
-                        depthWrite: false, 
-                        depthTest: true // Check depth to respect walls (prevents X-ray)
+                    const mat = new THREE.SpriteMaterial({
+                        map: tex,
+                        color: 0xffffff,
+                        transparent: true,
+                        depthWrite: false,
+                        depthTest: true
                     });
                     materialCache.set(key, mat);
                 }
                 return materialCache.get(key);
             };
 
-            // --- Icon Background (Gray Sphere) ---
-            // Wraps the icon to provide contrast against the node core color
             const getIconBgMaterial = () => {
                 const bgKey = 'icon-bg-grey';
                 if (!materialCache.has(bgKey)) {
@@ -293,7 +287,6 @@ export function createNodeObject(node) {
                 return materialCache.get(bgKey);
             };
 
-            // Create background sphere (slightly smaller than core, larger than icon)
             // Reusing coreFile geometry (Radius 6) but scaling it down
             const iconBg = new THREE.Mesh(geometryCache.coreFile, getIconBgMaterial());
             iconBg.scale.set(0.7, 0.7, 0.7); // Effective Radius ~4.2
@@ -303,17 +296,16 @@ export function createNodeObject(node) {
             const iconSprite = new THREE.Sprite(iconMat);
             // Scale 4 fits well within the radius 6 core (and radius 4.2 bg)
             iconSprite.scale.set(4, 4, 1);
-            
+
             // Remove forced renderOrder to allow interleaving with Cores based on distance
-            iconSprite.renderOrder = 0; 
-            
+            iconSprite.renderOrder = 0;
+
             group.add(iconSprite);
 
-            // Adjust Core Opacity for visibility (Solid enough to hide bg, but no depthWrite to allow inner icon sorting)
-            coreMat.opacity = 0.9; 
-            coreMat.transmission = 0.05; 
+            coreMat.opacity = 0.9;
+            coreMat.transmission = 0.05;
             coreMat.depthWrite = false;
-        } 
+        }
     }
 
     // 2. Inner Glow

@@ -20,155 +20,174 @@ setupUI();
 
 // --- ERROR HANDLER ---
 function handleError(error, context = "") {
-  const msg = error.message || error;
-  log(`Error (${context}): ${msg}`);
+  console.error(`Full Error (${context}):`, error);
 
-  const status = document.getElementById("status");
-  if (status) {
-    status.style.display = "block";
-    status.style.color = "#ff6b6b";
-    status.innerText = `Error: ${msg}. Auto-recovering...`;
+  const msg = error.message || (typeof error === 'string' ? error : 'Unknown Error');
+  // status element might not exist if HTML is broken, but usually it does.
+  const statusEl = document.getElementById("status");
+
+  if (statusEl) {
+    statusEl.style.display = "block";
+
+    // Distinguish generic Script Error
+    if (msg.toLowerCase().includes("script error")) {
+      statusEl.style.color = "#ffeb3b"; // Yellow for warning
+      statusEl.innerText = `Warning: External Script Error (likely CORS). Attempting to continue...`;
+      setTimeout(() => {
+        statusEl.style.display = "none";
+      }, 3000);
+      return;
+    }
+
+    statusEl.style.color = "#ff6b6b";
+    statusEl.innerText = `Error: ${msg}. Recovering...`;
   }
 
-  // Trigger Recovery
+  // Trigger Recovery for serious errors
   setTimeout(() => {
     vscode.postMessage({ command: 'emergencyRefresh' });
-  }, 1000);
+  }, 2000); // 2s delay
 }
 
 // Runtime Error Handler
-window.onerror = function (msg, url, line) {
-  handleError(`${msg} at ${line}`, "Runtime");
+window.onerror = function (msg, url, line, col, error) {
+  const fullMsg = error ? error.message : msg;
+  handleError(fullMsg, `Runtime at ${line}:${col}`);
+  return false; // let default handler run too
 };
 
 // --- GRAPH INIT ---
-try {
-  State.Graph = ForceGraph3D()(elem)
-    .backgroundColor("#000308")
-    .nodeColor((node) => node.color || "#00ffff")
-    .linkColor((link) =>
-      State.highlightLinks.has(link)
-        ? "rgba(255, 255, 0, 0.8)"
-        : "rgba(255, 255, 255, 0.25)"
-    )
-    .linkWidth(1.5)
-    .linkOpacity(1.0)
-    .linkCurvature(0.2)
-    .linkDirectionalParticles(1)
-    .linkDirectionalParticleSpeed(0.006)
-    .linkDirectionalParticleWidth(2.0)
-    .showNavInfo(false)
-    .onNodeClick((node) => {
-      try {
-        activateNode(node);
-        updateBreadcrumbs(node);
+function initGraph() {
+  try {
+    if (State.Graph) return; // Already initialized
 
-        // Restore Left Click: Open File
-        if (node && node.type === "file" && node.path) {
-          vscode.postMessage({ command: "openFile", path: node.path });
+    State.Graph = ForceGraph3D()(elem)
+      .backgroundColor("#000308")
+      .nodeColor((node) => node.color || "#00ffff")
+      .linkColor((link) =>
+        State.highlightLinks.has(link)
+          ? "rgba(255, 255, 0, 0.8)"
+          : "rgba(255, 255, 255, 0.25)"
+      )
+      .linkWidth(1.5)
+      .linkOpacity(1.0)
+      .linkCurvature(0.2)
+      .linkDirectionalParticles(1)
+      .linkDirectionalParticleSpeed(0.006)
+      .linkDirectionalParticleWidth(2.0)
+      .showNavInfo(false)
+      .onNodeClick((node) => {
+        try {
+          activateNode(node);
+          updateBreadcrumbs(node);
+
+          // Restore Left Click: Open File
+          if (node && node.type === "file" && node.path) {
+            vscode.postMessage({ command: "openFile", path: node.path });
+          }
+          hideContextMenu(); // Ensure menu closes on left click
+        } catch (err) {
+          // Log only, click error usually doesn't need full refresh
+          log("Click Error: " + err.message);
         }
-        hideContextMenu(); // Ensure menu closes on left click
-      } catch (err) {
-        // Log only, click error usually doesn't need full refresh
-        log("Click Error: " + err.message);
-      }
-    })
-    .onNodeRightClick((node) => {
-      try {
-        // Show Context Menu on Right Click
-        if (node) {
-          const coords = State.Graph.graph2ScreenCoords(node.x, node.y, node.z);
-          showContextMenu(node, coords.x, coords.y);
+      })
+      .onNodeRightClick((node) => {
+        try {
+          // Show Context Menu on Right Click
+          if (node) {
+            const coords = State.Graph.graph2ScreenCoords(node.x, node.y, node.z);
+            showContextMenu(node, coords.x, coords.y);
+          }
+        } catch (err) {
+          log("Right Click Error: " + err.message);
         }
-      } catch (err) {
-        log("Right Click Error: " + err.message);
-      }
-    })
-    .onBackgroundClick(() => {
-      State.highlightLinks.clear();
-      updateBreadcrumbs(null);
-      State.Graph.linkColor(State.Graph.linkColor());
+      })
+      .onBackgroundClick(() => {
+        State.highlightLinks.clear();
+        updateBreadcrumbs(null);
+        State.Graph.linkColor(State.Graph.linkColor());
 
-      // Hide UI
-      hideContextMenu();
-      hideSearch();
-    })
-    .nodeThreeObject(createNodeObject)
-    .linkThreeObjectExtend(true)
-    .linkDirectionalParticleColor((link) =>
-      State.highlightLinks.has(link) ? "rgba(255, 255, 0, 0.6)" : "#ffffff"
-    )
-    .width(window.innerWidth)
-    .height(window.innerHeight);
+        // Hide UI
+        hideContextMenu();
+        hideSearch();
+      })
+      .nodeThreeObject(createNodeObject)
+      .linkThreeObjectExtend(true)
+      .linkDirectionalParticleColor((link) =>
+        State.highlightLinks.has(link) ? "rgba(255, 255, 0, 0.6)" : "#ffffff"
+      )
+      .width(window.innerWidth)
+      .height(window.innerHeight);
 
-  // Debug Config
-  // log(`Config check: ${JSON.stringify(window.synapTreeConfig)}`);
+    // --- ANIMATION LOOP ---
+    function animate() {
+      if (!State.Graph) return; // Stop animation if graph is gone
 
-  // --- ANIMATION LOOP ---
-  function animate() {
-    State.pulseObjects.forEach((obj) => {
-      obj.t += obj.speed;
+      State.pulseObjects.forEach((obj) => {
+        obj.t += obj.speed;
 
-      if (obj.isMatch) {
-        const flashColor = obj.baseColor;
-        obj.core.scale.set(1.5, 1.5, 1.5);
-        obj.aura.visible = false;
-        obj.innerGlow.visible = false;
-        obj.ripple.visible = true;
-        obj.ripple.material.color.set(flashColor);
-        const rippleSpeed = 0.4; // Slower ripple (User Request)
-        const cycle = (obj.t * rippleSpeed) % 1;
-        const s = obj.baseScale * (1 + cycle * 3);
-        obj.ripple.scale.set(s, s, 1);
-        obj.ripple.material.opacity = 1.0 * (1 - Math.pow(cycle, 3));
-      } else {
-        const s = 1 + Math.sin(obj.t) * 0.12;
-        obj.core.scale.set(s, s, s);
+        if (obj.isMatch) {
+          const flashColor = obj.baseColor;
+          obj.core.scale.set(1.5, 1.5, 1.5);
+          obj.aura.visible = false;
+          obj.innerGlow.visible = false;
+          obj.ripple.visible = true;
+          obj.ripple.material.color.set(flashColor);
+          const rippleSpeed = 0.4; // Slower ripple (User Request)
+          const cycle = (obj.t * rippleSpeed) % 1;
+          const s = obj.baseScale * (1 + cycle * 3);
+          obj.ripple.scale.set(s, s, 1);
+          obj.ripple.material.opacity = 1.0 * (1 - Math.pow(cycle, 3));
+        } else {
+          const s = 1 + Math.sin(obj.t) * 0.12;
+          obj.core.scale.set(s, s, s);
 
-        // --- COLOR & SCALE LOGIC (Loop with Status) ---
-        let targetInnerColor = obj.baseColor;
-        let targetOuterColor = "#ffffff"; // Default Glassy White
-        let targetOpacityGlow = GIT_STATUS_CONFIG.default.opacityGlow;
-        let targetOpacityAura = 0.02; // Completely transparent default
-        let targetAuraScale = 1.0;
+          let targetInnerColor = obj.baseColor;
+          let targetOuterColor = "#ffffff";
+          let targetOpacityGlow = GIT_STATUS_CONFIG.default.opacityGlow;
+          let targetOpacityAura = 0.02;
+          let targetAuraScale = 1.0;
 
-        // Use centralized config
-        if (obj.node.gitStatus && GIT_STATUS_CONFIG[obj.node.gitStatus]) {
-          const conf = GIT_STATUS_CONFIG[obj.node.gitStatus];
-          // innerColor NOT changed (User Request)
-          targetOuterColor = conf.color;
-          targetOpacityGlow = conf.opacityGlow;
-          targetOpacityAura = conf.opacityAura;
-          targetAuraScale = conf.auraScale || 1.0;
+          if (obj.node.gitStatus && GIT_STATUS_CONFIG[obj.node.gitStatus]) {
+            const conf = GIT_STATUS_CONFIG[obj.node.gitStatus];
+            targetOuterColor = conf.color;
+            targetOpacityGlow = conf.opacityGlow;
+            targetOpacityAura = conf.opacityAura;
+            targetAuraScale = conf.auraScale || 1.0;
+          }
+
+          // Apply Aura Scale (multiplied by pulse)
+          const auraS = s * targetAuraScale;
+          obj.innerGlow.scale.set(auraS, auraS, auraS);
+          obj.aura.scale.set(auraS, auraS, auraS);
+
+          obj.aura.visible = true;
+          obj.innerGlow.visible = true;
+          obj.ripple.visible = false;
+
+          obj.innerGlow.material.color.set(targetInnerColor);
+          obj.aura.material.color.set(targetOuterColor);
+          obj.innerGlow.material.opacity = targetOpacityGlow;
+          obj.aura.material.opacity = targetOpacityAura;
+
+          if (obj.labelSprite) {
+            obj.labelSprite.material.color.set(
+              obj.node.gitStatus ? targetOuterColor : "#ffffff"
+            );
+          }
         }
-
-        // Apply Aura Scale (multiplied by pulse)
-        const auraS = s * targetAuraScale;
-        obj.innerGlow.scale.set(auraS, auraS, auraS);
-        obj.aura.scale.set(auraS, auraS, auraS);
-
-        obj.aura.visible = true;
-        obj.innerGlow.visible = true;
-        obj.ripple.visible = false;
-
-        obj.innerGlow.material.color.set(targetInnerColor);
-        obj.aura.material.color.set(targetOuterColor);
-        obj.innerGlow.material.opacity = targetOpacityGlow;
-        obj.aura.material.opacity = targetOpacityAura;
-
-        if (obj.labelSprite) {
-          obj.labelSprite.material.color.set(
-            obj.node.gitStatus ? targetOuterColor : "#ffffff"
-          );
-        }
-      }
-    });
-    requestAnimationFrame(animate);
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  } catch (err) {
+    handleError(err, "Graph Init");
+    State.Graph = null; // Ensure null if failed
   }
-  animate();
-} catch (err) {
-  handleError(err, "Graph Init");
 }
+
+// Initial Init
+initGraph();
 
 // --- RESIZE HANDLER ---
 window.addEventListener("resize", () => {
@@ -178,9 +197,7 @@ window.addEventListener("resize", () => {
   }
 });
 
-// --- HELPER to apply status ---
 function applyNodeStatus(targetId, newStatus) {
-  // log(`[Update] Request for: ${targetId} -> ${newStatus}`);
 
   // Normalize inputs to handle macOS NFD/NFC and case differences
   const normalizedTarget = (targetId || "").normalize("NFC");
@@ -202,10 +219,7 @@ function applyNodeStatus(targetId, newStatus) {
   }
 
   if (targetObj) {
-    // log(`[Update] Applied to node: ${targetObj.node.name}`);
     targetObj.node.gitStatus = newStatus;
-  } else {
-    // log(`[Update] Node NOT FOUND for id: ${targetId}`);
   }
 }
 
@@ -216,7 +230,6 @@ window.addEventListener("message", (event) => {
   if (message.command === "setData") {
     try {
       if (message.data && message.data.nodes) {
-        // log(`Processing data: ${message.data.nodes.length} nodes`);
         status.innerText = "Rendering Graph...";
 
         // Toggle Reset Button
@@ -231,19 +244,29 @@ window.addEventListener("message", (event) => {
         }
 
         State.pulseObjects.length = 0;
+
+        // SAFE GUARD: If Graph failed to init, try to init again now that we have data (Reset attempt)
+        if (!State.Graph) {
+          console.warn("Graph was missing. Attempting to re-initialize...");
+          initGraph();
+          if (!State.Graph) {
+            throw new Error("Graph Visualization could not be initialized");
+          }
+        }
+
         State.Graph.graphData(message.data);
+
+        // Success: Clear any error states
         status.style.display = "block";
+        status.style.color = "rgba(255, 255, 255, 0.8)"; // Reset to default color
         status.innerText = `${message.data.nodes.length} nodes loaded`;
 
         setTimeout(() => {
           status.style.display = "none";
           if (State.isFirstLoad) {
-            // Use zoomToFit to auto-calculate distance based on graph size
-            // State.Graph.zoomToFit(1000, 100); // User requested no auto-zoom
             State.isFirstLoad = false;
           }
 
-          // --- SMART FOCUS (New Feature) ---
           if (message.focusTargetId) {
             const { nodes } = State.Graph.graphData();
             const targetNode = nodes.find(
@@ -267,7 +290,6 @@ window.addEventListener("message", (event) => {
             }
           }
 
-          // --- PROCESS QUEUE ---
           if (State.pendingUpdates.size > 0) {
 
             State.pendingUpdates.forEach((st, id) => {
@@ -276,7 +298,6 @@ window.addEventListener("message", (event) => {
             State.pendingUpdates.clear();
           }
         }, 1500);
-        // log("Data applied successfully");
       } else {
         log("Received empty or invalid data");
         status.innerText = "Error: No nodes found in workspace";
@@ -404,7 +425,6 @@ window.addEventListener("message", (event) => {
   } else if (message.command === "addNodes") {
     const { nodes: newNodesList } = message;
     if (State.Graph && newNodesList && newNodesList.length > 0) {
-      // Pause Physics for ingestion
       State.Graph.pauseAnimation();
 
       const { nodes, links } = State.Graph.graphData();

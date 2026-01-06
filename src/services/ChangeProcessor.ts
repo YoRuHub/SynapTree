@@ -60,11 +60,6 @@ export class ChangeProcessor {
     }
 
     public queueFileEvent(type: 'create' | 'delete', uri: vscode.Uri) {
-        // Active Watchdog is running via setInterval, so we don't need the check here anymore.
-
-
-        // Optimize: If creating a file that is already pending delete, just remove from delete queue?
-        // Or if deleting a file pending create, remove from create queue.
         if (type === 'delete') {
             this.queue = this.queue.filter(e => !(e.type === 'create' && e.uri.fsPath === uri.fsPath));
         } else if (type === 'create') {
@@ -93,15 +88,11 @@ export class ChangeProcessor {
             const creates = chunk.filter(e => e.type === 'create').map(e => e.uri);
             const deletes = chunk.filter(e => e.type === 'delete').map(e => e.uri.fsPath);
 
-            // 1. Process Deletes
             if (deletes.length > 0) {
-                // this.outputChannel.appendLine(`[Processor] Processing ${deletes.length} deletes`);
                 this.notifyDeletes(deletes);
             }
 
-            // 2. Process Creates
             if (creates.length > 0) {
-                // this.outputChannel.appendLine(`[Processor] Processing ${creates.length} creates`);
 
                 // Fetch config once for this batch
                 const config = getWorkspaceConfig();

@@ -1,4 +1,10 @@
 # Change Log
+ 
+## [0.1.7] - 2026-01-07
+
+### Fixed
+- **Script Errors**: Fixed critical compilation errors in `dataRegistry.ts` (missing variable and type issues) introduced during code cleanup.
+- **Codebase Audit**: Performed a comprehensive project-wide cleanup, removing all redundant multi-line comments, explanatory clusters, and duplicated headers to improve maintainability.
 
 ## [0.1.6] - 2026-01-06
 
